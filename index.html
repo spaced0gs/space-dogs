@@ -1,0 +1,2027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Dogs</title>
+    <script src="https://telegram.org"></script>
+    <style>
+        body {
+            background: #090a10; color: #fff; font-family: sans-serif;
+            display: flex; align-items: center; justify-content: center;
+            height: 100vh; margin: 0; overflow: hidden;
+        }
+        
+.phone-container {
+    width: 100vw; 
+    height: 100vh;
+    max-width: 100%; 
+    max-height: 100%; 
+    background: #000; 
+    position: relative;
+    display: block;
+    padding: 85px 16px 95px; 
+    box-sizing: border-box; 
+    overflow: hidden;
+    border-radius: 0; 
+    box-shadow: none;
+}
+
+button, a, input, [onclick], .earn-item, .shop-btn {
+    -webkit-tap-highlight-color: transparent !important;
+    outline: none !important;
+}
+
+
+
+        .rocket-dog-pilot {
+            position: absolute;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center center;
+            z-index: 2;
+            pointer-events: none;
+            border-radius: 50%;
+        }
+
+
+
+
+
+        .screen {
+            position: absolute; width: 100%; height: 100%; top: 0; left: 0; display: none;
+        }
+        .screen.active {
+            display: block;
+        }
+        
+        .main-menu-bg {
+            position: absolute; 
+            width: 100%; 
+            height: 100%; 
+            top: 0; 
+            left: 0;
+            background-image: url('menu_bg.jpg'); 
+            background-size: cover; 
+            background-position: center center; 
+            background-repeat: no-repeat;
+            z-index: 1;
+        
+        }
+        .station-building {
+            position: absolute; bottom: 22%; left: 5%; width: 150px; height: 120px;
+            background-image: url('space_station.png'); background-size: contain; background-repeat: no-repeat;
+            z-index: 2;
+        }
+        .menu-ground {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 25%;
+            background-image: url('grass.png'); background-size: 100% 100%; z-index: 3;
+        }
+        .showcase-rocket {
+            position: absolute; bottom: 18%; left: 55%; width: 120px; height: 240px;
+            background-image: url('rocket_spark.png'); background-size: contain; background-repeat: no-repeat; background-position: bottom center;
+            z-index: 4; transition: background-image 0.3s ease-in-out;
+        }
+        .showcase-dog {
+            position: absolute; bottom: 15%; left: 40%; width: 65px; height: 110px;
+            background-image: url('dog_base.png'); background-size: contain; background-repeat: no-repeat; background-position: bottom center;
+            z-index: 5; transition: background-image 0.3s ease-in-out;
+        }
+
+        .bg-layer {
+            position: absolute; width: 100%; height: 100%; top:0; left:0; z-index: 1;
+            background-size: 100% 100%; background-position: center; background-repeat: no-repeat;
+            transition: opacity 0.2s ease-in-out;
+        }
+        #sky-bg { background-image: url('sky.png?v=23'); opacity: 1; }
+        #clouds-bg { background-image: url('clouds.png?v=23'); opacity: 0; }
+        #space-bg { background-image: url('space.jpg?v=23'); opacity: 0; }
+        
+        #stars-container {
+            position: absolute; width: 100%; height: 100%; top: 0; left: 0; z-index: 2; pointer-events: none;
+        }
+        .star {
+            position: absolute; width: 2px; height: 2px; background: #fff; border-radius: 50%; opacity: 0;
+        }
+        .object { position: absolute; background-size: contain; background-repeat: no-repeat; transition: opacity 0.2s ease-in-out; }
+        #ground { 
+            bottom: 0; left: 0; width: 100%; height: 22%; 
+            background-image: url('grass.png.png?v=23'); background-size: 100% 100%; z-index: 4; opacity: 1;
+        }
+        #planet { top: -300px; right: 10%; width: 110px; height: 110px; background-image: url('mars.png'); opacity: 0; z-index: 3; }
+        #asteroid { top: -200px; left: 10%; width: 55px; height: 55px; background-image: url('asteroid.png?v=23'); opacity: 0; z-index: 3; }
+        
+        .scene { 
+            width: 220px; height: 270px; z-index: 5; 
+            position: absolute; bottom: 15%; left: calc(50% - 110px);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .rocket-main {
+            width: 100%; height: 100%;
+            background-image: url('rocket0.png');
+            background-size: contain; background-repeat: no-repeat; background-position: center;
+            position: relative;
+        }
+
+        .rocket-fire {
+            position: absolute; bottom: -55px; left: calc(50% - 25px); width: 50px; height: 55px;
+            background-image: url('fire.png'); background-size: contain; background-repeat: no-repeat; background-position: top center;
+            display: none; z-index: 3; animation: pulseFire 0.05s infinite alternate;
+        }
+        @keyframes pulseFire {
+            0% { transform: scaleY(0.9) scaleX(0.95); opacity: 0.9; }
+            100% { transform: scaleY(1.2) scaleX(1.05); opacity: 1; }
+        }
+
+        .controls-area {
+            width: 100%; display: flex; flex-direction: column; align-items: center;
+            z-index: 10; position: absolute; bottom: 55px; left: 0;
+        }
+        .top-percentage { 
+            position: absolute; 
+            top: 15px;
+            right: 15px;
+            font-size: 20px;
+            font-weight: 900; 
+            color: #ffffff; 
+            text-shadow: 0 2px 6px rgba(0,0,0,0.6); 
+            z-index: 11;
+        }
+
+        .btn-hold {
+            width: 100px; 
+            height: 100px; 
+            background: #7ec8f8; 
+            border: 4px solid #fff; 
+            border-radius: 50%; 
+            color: #ffffff; 
+            font-size: 18px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3); 
+            outline: none; 
+            transition: background 0.1s, transform 0.05s; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+        }
+        .btn-hold:active { 
+            background: #ff0000; border-color: #fff; color: #ffffff; box-shadow: 0 0 25px #ff0000; transform: scale(0.96);
+        }
+        .shaking-rocket { animation: shakeRocket 0.04s infinite alternate ease-in-out; }
+        @keyframes shakeRocket { 
+            0% { transform: translate(0.7px, 0.5px) rotate(0.2deg); } 
+            100% { transform: translate(-0.7px, -0.5px) rotate(-0.2deg); } 
+        }
+
+.balance-area {
+    position: absolute; 
+    top: 65px; 
+    left: 0; 
+    width: 100%; 
+    text-align: center;
+    z-index: 30; 
+    font-size: 34px; 
+    font-weight: 800; 
+    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 8px;
+}
+
+.navigation-bar {
+    position: absolute; 
+    bottom: 0px; 
+    left: 12px; 
+    right: 12px;
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    gap: 6px; 
+    z-index: 30; 
+    box-sizing: border-box;
+}
+
+
+
+        .nav-btn {
+            flex: 1; 
+            height: 54px; 
+            background-color: #000000;
+            background-image: 
+                radial-gradient(1px 1px at 20% 30%, #ffffff, rgba(255,255,255,0)),
+                radial-gradient(1px 1px at 75% 20%, #ffffff, rgba(255,255,255,0)),
+                radial-gradient(1.5px 1.5px at 50% 70%, #ffffff, rgba(255,255,255,0)),
+                radial-gradient(1px 1px at 15% 80%, #ffffff, rgba(255,255,255,0)),
+                radial-gradient(2px 2px at 85% 75%, #ffffff, rgba(255,255,255,0)),
+                radial-gradient(1px 1px at 35% 60%, #ffffff, rgba(255,255,255,0));
+            background-size: cover;
+            border: none; 
+            border-radius: 12px;
+            color: #ffffff; 
+            font-size: 11px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            text-transform: uppercase;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
+            outline: none; 
+            transition: transform 0.05s;
+            display: flex;
+            align-items: center; 
+            justify-content: center;
+            padding: 6px 0;
+            box-sizing: border-box;
+            line-height: 1.2;
+
+            -webkit-tap-highlight-color: transparent;
+        }
+
+.nav-btn .btn-text { font-size: 9px; opacity: 0.8; }
+.nav-btn .btn-emoji { font-size: 16px; }
+.nav-btn:active, .nav-btn.active-tab { 
+    background: #000000; 
+    border-color: #7ec8f8; 
+    transform: scale(0.95); 
+}
+
+
+        .btn-back-menu {
+            position: absolute; top: 30px; left: 25px; background: rgba(0,0,0,0.5); border: 2px solid #fff;
+            padding: 6px 12px; border-radius: 10px; color: #fff; cursor: pointer; font-weight: bold; z-index: 21;
+        }
+            .rocket-landing-anim {
+        animation: landIntoPlanet 2s forwards ease-in-out;
+        }
+        @keyframes landIntoPlanet {
+            0% { transform: scale(1) translateY(0); opacity: 1; }
+            100% { transform: scale(0) translateY(-250px); opacity: 0; }
+        }
+                /* CS:GO Roulette Modal */
+        .case-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(9, 10, 16, 0.95); z-index: 9999;
+            display: none; align-items: center; justify-content: center;
+            flex-direction: column; font-family: sans-serif; box-sizing: border-box;
+        }
+        .case-modal.active { display: flex; }
+        .roulette-wrapper {
+            position: relative; width: 340px; height: 110px;
+            background: #141729; border: 3px solid #3d446e;
+            border-radius: 16px; overflow: hidden; margin: 20px 0;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.6);
+        }
+        .roulette-pointer {
+            position: absolute; top: 0; left: calc(50% - 2px);
+            width: 4px; height: 100%; background: #ff0000;
+            z-index: 10; box-shadow: 0 0 10px #ff0000;
+        }
+        .roulette-track {
+            display: flex; position: absolute; top: 10px; left: 0;
+            height: 90px; will-change: transform;
+        }
+        .roulette-item {
+            width: 90px; height: 90px; margin: 0 5px;
+            background: #232742; border-radius: 12px;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; box-sizing: border-box;
+            border: 2px solid #3d446e; flex-shrink: 0;
+        }
+        .roulette-item img { width: 50px; height: 50px; object-fit: contain; }
+        .roulette-item span { font-size: 10px; color: #a2a9d6; margin-top: 4px; text-align: center; font-weight: bold; }
+        .win-title { font-size: 20px; color: #fff; margin-bottom: 10px; font-weight: bold; text-align: center; min-height: 24px; }
+        .modal-btn-close {
+            padding: 12px 30px; background: #2196F3; color: #fff;
+            border: none; border-radius: 10px; font-weight: bold;
+            cursor: pointer; font-size: 16px; display: none; box-shadow: 0 4px 15px rgba(33,150,243,0.4);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="phone-container">
+        <div class="balance-area"><img src="coin.png" alt="coin" style="width: 32px; height: 32px; vertical-align: middle; margin-right: 5px; display: inline-block; transform: translateY(-4px);"> <span id="bal">0</span></div>
+
+
+        <div id="screen-menu" class="screen">
+            <div class="main-menu-bg"></div>
+            <div class="station-building"></div>
+            <div class="menu-ground"></div>
+            <div id="current-dog" class="showcase-dog"></div>
+            <div id="current-rocket" class="showcase-rocket"></div>
+        </div>
+
+        <div id="screen-game" class="screen active">
+            <div class="bg-layer" id="sky-bg"></div>
+            <div class="bg-layer" id="clouds-bg"></div>
+            <div class="bg-layer" id="space-bg"></div>
+            <div id="stars-container"></div>
+            
+            <div class="object" id="ground"></div>
+            <div class="object" id="planet"></div>
+            <div class="object" id="asteroid"></div>
+            <div class="top-percentage"><span id="perc">0</span>%</div>
+
+            <div class="scene" id="rocket-box">
+                <div class="rocket-main" id="rock">
+                    <div id="rocket-dog-pilot" class="rocket-dog-pilot"></div>
+                    <div class="rocket-fire" id="fire"></div>
+                </div>
+            </div>
+
+
+            <div class="controls-area">
+                <button class="btn-hold" id="btn-hold">HOLD</button>
+            </div>
+        </div>
+
+        <div id="screen-shop" class="screen" style="background: #141729; padding: 20px 15px 0px; overflow-y: hidden; height: 100%; box-sizing: border-box;">
+            <h2 style="text-align: center; margin-bottom: 20px; color: #7ec8f8;">🚀 SPACE MARKET 🐾</h2>
+            
+<div style="display: flex; gap: 10px; margin-bottom: 20px;">
+    <button id="shop-tab-dogs" style="flex: 1; padding: 10px; background: #ffffff; color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">DOGS</button>
+    <button id="shop-tab-rockets" style="flex: 1; padding: 10px; background: #232742; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">ROCKETS</button>
+    <button id="btn-shop-cases" style="flex: 1; padding: 10px; background: #222644; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">CASES</button>
+</div>
+
+            <!-- Shop Items: Cases Container -->
+<div id="shop-cases-container" style="display: none; height: calc(100vh - 280px); overflow-y: auto; padding-bottom: 100px; box-sizing: border-box;">
+    
+<!-- Case 1: Dog Case -->
+<div class="shop-list-item" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between;">
+    <div class="shop-item-info" style="display: flex; align-items: center; gap: 15px;">
+        <img src="dog_case.png" alt="Dog Case" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+        <div>
+            <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Case</h4>
+            <p style="margin: 0; font-size: 11px; color: #a2a9d6; line-height: 1.5; padding-right: 25px; box-sizing: border-box;">Chances:<br>Lvl1(20%), Lvl2(16%), Lvl3(14%), Lvl4(12%), Lvl5(10%), Lvl6(9%), Lvl7(7%), Lvl8(5%), Lvl9(4%), Lvl10(3%)</p>
+        </div>
+    </div>
+    <button class="shop-btn buy" id="btn-open-dog-case" style="padding: 10px 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 100px;" onclick="openCustomCase('dog', 500000)">
+        OPEN<br>
+        <span style="font-size: 10px; display: inline-block; margin-left: 6px;">500⭐</span><br>
+        <span id="dog-case-limit-txt" style="font-size: 10px; font-weight: normal; color: rgba(255,255,255,0.75);">0/5</span>
+    </button>
+</div>
+
+
+<!-- Case 2: Rocket Case -->
+<div class="shop-list-item" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between;">
+    <div class="shop-item-info" style="display: flex; align-items: center; gap: 15px;">
+        <img src="rocket_case.png" alt="Rocket Case" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+        <div>
+            <h4 style="margin: 0 0 5px 0; color: #fff;">Rocket Case</h4>
+            <p style="margin: 0; font-size: 11px; color: #a2a9d6; line-height: 1.4;">Chances: Lvl1(45%), Lvl2(25%), Lvl3(15%), Lvl4(12%), Lvl5(3%)</p>
+        </div>
+    </div>
+    <button class="shop-btn buy" id="btn-open-rocket-case" style="padding: 10px 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 100px;" onclick="openCustomCase('rocket', 1000000)">
+        OPEN<br>
+        <span style="font-size: 10px; display: inline-block; margin-left: 6px;">1000⭐</span><br>
+        <span id="rocket-case-limit-txt" style="font-size: 10px; font-weight: normal; color: rgba(255,255,255,0.75);">0/5</span>
+    </button>
+</div>
+
+
+</div>
+
+
+
+            
+                        <div id="shop-dogs-container" style="height: calc(100vh - 50px); overflow-y: auto; padding-bottom: 150px; box-sizing: border-box;">
+                <div class="dog-card" id="dog-card-0" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px;">
+                    <img src="dog0.png" alt="dog0" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Rookie (Lvl 0)</h4>
+                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 5%</p>
+                    </div>
+                    <button id="dog-btn-0" style="background: #2196F3; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">USED</button>
+                </div>
+                <div class="dog-card" id="dog-card-1" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px;">
+                    <img src="dog1.png" alt="dog1" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Max (Lvl 1)</h4>
+                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 10%</p>
+                    </div>
+                    <button onclick="buySpecificDog(1)" id="dog-btn-1" style="background: #7ec8f8; color: #000; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">BUY<br>20000 <img src="coin.png" style="width:14px; height:14px; vertical-align:middle; margin-left:2px; transform:translateY(-1px);"></button>
+                </div>
+                <div class="dog-card" id="dog-card-2" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
+                    <img src="dog2.png" alt="dog2" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Buddy (Lvl 2)</h4>
+                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 20%</p>
+                    </div>
+                    <button onclick="buySpecificDog(2)" id="dog-btn-2" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+                </div>
+                <div class="dog-card" id="dog-card-3" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
+                    <img src="dog3.png" alt="dog3" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Rocky (Lvl 3)</h4>
+                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 30%</p>
+                    </div>
+                    <button onclick="buySpecificDog(3)" id="dog-btn-3" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+                </div>
+                <div class="dog-card" id="dog-card-4" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
+                    <img src="dog4.png" alt="dog4" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Bailey (Lvl 4)</h4>
+                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 40%</p>
+                    </div>
+                    <button onclick="buySpecificDog(4)" id="dog-btn-4" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+                </div>
+                <div class="dog-card" id="dog-card-5" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
+                    <img src="dog5.png" alt="dog5" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Buster (Lvl 5)</h4>
+                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 50%</p>
+                    </div>
+                    <button onclick="buySpecificDog(5)" id="dog-btn-5" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+                </div>
+                <div class="dog-card" id="dog-card-6" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
+                    <img src="dog6.png" alt="dog6" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Toby (Lvl 6)</h4>
+                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 60%</p>
+                    </div>
+                    <button onclick="buySpecificDog(6)" id="dog-btn-6" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+                </div>
+                <div class="dog-card" id="dog-card-7" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
+                    <img src="dog7.png" alt="dog7" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Duke (Lvl 7)</h4>
+                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 70%</p>
+                    </div>
+                    <button onclick="buySpecificDog(7)" id="dog-btn-7" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+                </div>
+                <div class="dog-card" id="dog-card-8" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
+                    <img src="dog8.png" alt="dog8" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Cody (Lvl 8)</h4>
+                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 80%</p>
+                    </div>
+                    <button onclick="buySpecificDog(8)" id="dog-btn-8" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+                </div>
+                <div class="dog-card" id="dog-card-9" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
+                    <img src="dog9.png" alt="dog9" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Rex (Lvl 9)</h4>
+                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 90%</p>
+                    </div>
+                    <button onclick="buySpecificDog(9)" id="dog-btn-9" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+                </div>
+                                <div class="dog-card" id="dog-card-10" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
+                    <img src="dog10.png" alt="dog10" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog June (Lvl 10)</h4>
+                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 100%</p>
+                    </div>
+                    <button onclick="buySpecificDog(10)" id="dog-btn-10" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+                </div>
+</div>
+
+            <div id="shop-rockets-container" style="display: none; height: calc(100vh - 180px); overflow-y: auto; padding-bottom: 120px; box-sizing: border-box;">
+                <div class="rocket-card" id="rocket-card-0" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px;">
+                    <img src="rocket0.png" alt="rocket0" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #fff;">Rocket Starter (Lvl 0)</h4>
+                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight speed: Base Speed</p>
+                    </div>
+                    <button id="rocket-btn-0" style="background: #2196F3; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">USED</button>
+                </div>
+                <div class="rocket-card" id="rocket-card-1" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px;">
+                    <img src="rocket1.png" alt="rocket1" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #fff;">Rocket Spark (Lvl 1)</h4>
+                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight speed: Speed x2</p>
+                    </div>
+                    <button onclick="buySpecificRocket(1)" id="rocket-btn-1" style="background: #ff5e5e; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">BUY<br>150000 🪙</button>
+                </div>
+                <div class="rocket-card" id="rocket-card-2" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
+                    <img src="rocket2.png" alt="rocket2" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #fff;">Rocket Nebula (Lvl 2)</h4>
+                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight speed: Speed x3</p>
+                    </div>
+                    <button onclick="buySpecificRocket(2)" id="rocket-btn-2" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+                </div>
+                <div class="rocket-card" id="rocket-card-3" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
+                    <img src="rocket3.png" alt="rocket3" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #fff;">Rocket Quasar (Lvl 3)</h4>
+                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight speed: Speed x4</p>
+                    </div>
+                    <button onclick="buySpecificRocket(3)" id="rocket-btn-3" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+                </div>
+                <div class="rocket-card" id="rocket-card-4" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
+                    <img src="rocket4.png" alt="rocket4" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #fff;">Rocket Supernova (Lvl 4)</h4>
+                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight speed: Speed x5</p>
+                    </div>
+                    <button onclick="buySpecificRocket(4)" id="rocket-btn-4" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+                </div>
+                <div class="rocket-card" id="rocket-card-5" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
+                    <img src="rocket5.png" alt="rocket5" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #fff;">Rocket June X (Lvl 5)</h4>
+                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight speed: Speed x6</p>
+                    </div>
+                    <button onclick="buySpecificRocket(5)" id="rocket-btn-5" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+                </div>
+            </div>
+            <div id="shop-cases-container" style="display: none; height: calc(100vh - 50px); overflow-y: auto; padding-bottom: 220px; box-sizing: border-box;">
+                <p style="color: #a2a9d6; text-align: center; margin-top: 40px;">Кейсы появятся тут</p>
+            </div>
+
+</div>
+</div>
+
+
+<div id="screen-clans" class="screen" style="background: #141729; padding: 80px 15px 140px; text-align: center; width: 100%; height: 100%; box-sizing: border-box; overflow-y: auto;">
+    
+    <!-- ИНТЕРФЕЙС, ЕСЛИ ИГРОК БЕЗ КЛАНА -->
+    <div id="clan-browser-view">
+        <h2 style="text-align: center; margin-bottom: 20px; color: #7ec8f8; text-transform: uppercase; font-size: 24px; font-weight: bold; letter-spacing: 0px; margin-top: -40px;">🐾 SPACE CLANS 🐾</h2>
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;">
+            <input type="text" id="clan-search-input" oninput="searchClans()" placeholder="Search clan..." style="flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #3d446e; background: #232742; color: #fff; font-size: 14px; outline: none; box-sizing: border-box;">
+            <button onclick="openClanModal()" style="position: absolute; bottom: 110px; right: 20px; z-index: 99; padding: 12px 18px; border: none; border-radius: 20px; font-weight: bold; background: #2196F3; color: #fff; font-size: 13px; cursor: pointer; box-shadow: 0 4px 15px rgba(33,150,243,0.4); white-space: nowrap; -webkit-tap-highlight-color: transparent;">CREATE CLAN</button>
+        </div>
+
+        <div style="text-align: left;">
+            <div id="clans-list-container" style="display: flex; flex-direction: column; gap: 10px;"></div>
+        </div>
+    </div>
+
+    <!-- ИНТЕРФЕЙС КЛАНА: СИСТЕМА ВНУТРЕННИХ ВКЛАДОК (ЧАТ / MEMBERS / EVENTS) -->
+    <div id="clan-chat-view" style="display: none; flex-direction: column; height: calc(100vh - 100px); margin-top: -65px; text-align: left; box-sizing: border-box;">
+        
+        <!-- НАВИГАЦИОННАЯ ШАПКА КЛАНА (Переключает вкладки) -->
+        <div style="display: flex; flex-direction: column; background: #232742; padding: 10px; border-radius: 12px; border: 1px solid #3d446e; margin-bottom: 8px; flex-shrink: 0; gap: 8px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                <div style="display: flex; align-items: center; gap: 10px; overflow: hidden; max-width: 60%;">
+                    <div id="chat-clan-logo" style="width: 32px; height: 32px; background: #141729; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 1px solid #3d446e; flex-shrink: 0;">🚀</div>
+                    <h4 id="chat-clan-name" style="margin: 0; color: #fff; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Clan Name</h4>
+                </div>
+                <button onclick="triggerLeaveFromChat()" style="padding: 6px 12px; border: none; border-radius: 6px; font-weight: bold; font-size: 11px; background: #ff5e5e; color: #fff; cursor: pointer; -webkit-tap-highlight-color: transparent;">LEAVE CLAN</button>
+            </div>
+            
+            <!-- Кнопки-вкладки (Внутренняя навигация) -->
+            <div style="display: flex; gap: 6px; width: 100%;">
+                <button id="clan-subtab-chat" onclick="switchClanSubTab('chat')" style="flex: 1; padding: 8px; border: none; border-radius: 6px; font-weight: bold; font-size: 11px; background: #2196F3; color: #fff; cursor: pointer; transition: background 0.2s;">CHAT</button>
+                <button id="clan-subtab-members" onclick="switchClanSubTab('members')" style="flex: 1; padding: 8px; border: none; border-radius: 6px; font-weight: bold; font-size: 11px; background: #141729; color: #fff; border: 1px solid #3d446e; cursor: pointer; transition: background 0.2s;">MEMBERS</button>
+                <button id="clan-subtab-events" onclick="switchClanSubTab('events')" style="flex: 1; padding: 8px; border: none; border-radius: 6px; font-weight: bold; font-size: 11px; background: #141729; color: #fff; border: 1px solid #3d446e; cursor: pointer; transition: background 0.2s;">EVENTS</button>
+            </div>
+        </div>
+
+        <!-- ВКЛАДКА 1: ОКНО СООБЩЕНИЙ (ЧАТ) -->
+        <div id="clan-subview-chat" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
+            <div id="chat-messages-box" style="flex: 1; background: #141729; border: 1px solid #3d446e; border-radius: 12px; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box; margin-bottom: 8px;"></div>
+            <div style="display: flex; gap: 8px; align-items: center; background: #232742; padding: 8px; border-radius: 10px; border: 1px solid #3d446e; box-sizing: border-box; flex-shrink: 0; margin-bottom: 0px;">
+                <input type="text" id="chat-message-input" placeholder="Type a message..." style="flex: 1; padding: 10px; border-radius: 8px; border: none; background: #141729; color: #fff; font-size: 14px; outline: none;">
+                <button onclick="sendClanMessage()" style="padding: 10px 16px; border: none; border-radius: 8px; font-weight: bold; background: #2196F3; color: #fff; cursor: pointer; font-size: 13px;">SEND</button>
+            </div>
+        </div>
+
+        <!-- ВКЛАДКА 2: СПИСОК УЧАСТНИКОВ И ИХ БАЛАНСЫ -->
+        <div id="clan-subview-members" style="display: none; flex-direction: column; flex: 1; min-height: 0; background: #141729; border: 1px solid #3d446e; border-radius: 12px; padding: 12px; overflow-y: auto; box-sizing: border-box; gap: 8px;">
+            <!-- Сюда динамически рендерятся игроки с их балансами из JavaScript -->
+        </div>
+
+        <!-- ВКЛАДКА 3: КЛАНОВЫЕ ИВЕНТЫ -->
+        <div id="clan-subview-events" style="display: none; flex-direction: column; flex: 1; min-height: 0; background: #141729; border: 1px solid #3d446e; border-radius: 12px; padding: 12px; overflow-y: auto; box-sizing: border-box; gap: 10px;">
+            <div style="background: #232742; padding: 12px; border-radius: 8px; border: 1px solid #3d446e;">
+                <h5 style="margin: 0 0 4px 0; color: #fff; font-size: 13px;">🏆 Space Race</h5>
+                <p style="margin: 0; font-size: 11px; color: #a2a9d6;">Fly together to reach cumulative 500% altitude.</p>
+                <div style="font-size: 11px; color: #ffb300; font-weight: bold; margin-top: 4px;">Reward: +50,000 spaces</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО СОЗДАНИЯ КЛАНА -->
+    <div id="clan-create-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(9, 10, 16, 0.95); z-index: 10000; display: none; align-items: center; justify-content: center; box-sizing: border-box; padding: 20px;">
+        <div style="background: #232742; padding: 20px; border-radius: 16px; border: 2px solid #3d446e; text-align: left; width: 100%; max-width: 360px; box-sizing: border-box; position: relative;">
+            <button onclick="closeClanModal()" style="position: absolute; top: 15px; right: 15px; background: none; border: none; color: #a2a9d6; font-size: 20px; cursor: pointer; font-weight: bold; -webkit-tap-highlight-color: transparent;">×</button>
+            <h3 style="color: #fff; margin: 0 0 5px 0; font-size: 18px;">Create New Clan</h3>
+            <p style="color: #ffb300; font-size: 12px; margin: 0 0 15px 0; font-weight: bold;">Price: 1,000,000 spaces <img src="coin.png" style="width:12px; height:12px; vertical-align:middle;"></p>
+            <label style="color: #a2a9d6; font-size: 12px; display: block; margin-bottom: 6px;">Select Clan Badge:</label>
+            <select id="clan-badge-select" style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #3d446e; background: #141729; color: #fff; font-size: 16px; margin-bottom: 12px; outline: none; appearance: none; -webkit-appearance: none;">
+                <option value="🚀">🚀 Rocket Pilots</option>
+                <option value="🐾">🐾 Space Dogs</option>
+                <option value="👑">👑 Royal Crew</option>
+                <option value="🛸">🛸 Alien Hunters</option>
+                <option value="💎">💎 Diamond Squad</option>
+                <option value="🔥">🔥 Solar Flare</option>
+                <option value="⭐">⭐ Star Lords</option>
+                <option value="🌌">🌌 Milky Way</option>
+                <option value="🪐">🪐 Saturn Team</option>
+                <option value="🛡️">🛡️ Space Guards</option>
+            </select>
+            <label style="color: #a2a9d6; font-size: 12px; display: block; margin-bottom: 6px;">Clan Name:</label>
+            <input type="text" id="clan-name-input" placeholder="Enter clan name (3-15 chars)..." style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid #3d446e; background: #141729; color: #fff; box-sizing: border-box; font-size: 14px; margin-bottom: 12px; outline: none;">
+            <label style="color: #a2a9d6; font-size: 12px; display: block; margin-bottom: 6px;">Minimum Required Dog Level:</label>
+            <select id="clan-req-select" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #3d446e; background: #141729; color: #fff; font-size: 14px; margin-bottom: 20px; outline: none; appearance: none; -webkit-appearance: none;">
+                <option value="0">Lvl 0 (Any Rookie)</option>
+                <option value="2">Lvl 2 (Experienced)</option>
+                <option value="5">Lvl 5 (Space Master)</option>
+                <option value="8">Lvl 8 (Elite Pilot)</option>
+            </select>
+            <button onclick="createNewClan()" style="width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; font-size: 14px; -webkit-tap-highlight-color: transparent;">CREATE CLAN</button>
+        </div>
+    </div>
+</div>
+
+
+    <!-- СПИСОК КЛАНОВ -->
+    <div style="text-align: left;">
+        <div id="clans-list-container" style="display: flex; flex-direction: column; gap: 10px;">
+            <!-- Сюда скрипт будет выводить списки кланов -->
+        </div>
+    </div>
+</div>
+
+
+<div id="screen-earn" class="screen" style="background: #141729; padding: 80px 15px 140px; text-align: center; width: 100%; height: 100%; box-sizing: border-box; overflow-y: auto;">
+    <h2 style="text-align: center; margin-bottom: 20px; color: #7ec8f8; text-transform: uppercase; font-size: 24px; font-weight: bold; letter-spacing: 0px; margin-top: -40px; margin-left: -10px;">💰 EARN TASKS 💰</h2>
+    
+    <div id="earn-tasks-container" style="display: flex; flex-direction: column; gap: 15px; padding-bottom: 50px;">
+        
+        <!-- Задание 1: Друзья -->
+        <div class="earn-item" style="background: #232742; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #3d446e; text-align: left; gap: 12px;">
+            <img src="friends_task.png" alt="friends" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2); flex-shrink: 0;">
+            <div style="flex: 1; padding-right: 10px;">
+                <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Invite 3 Friends</h4>
+                <p style="margin: 0; font-size: 11px; color: #a2a9d6; line-height: 1.3;">Reward: 1x Special Dog Case</p>
+                <div style="font-size: 11px; color: #7ec8f8; font-weight: bold; margin-top: 5px;">Progress: <span id="earn-friends-count">0</span>/3</div>
+            </div>
+            <button id="btn-task-friends" onclick="claimFriendsTask()" style="padding: 10px 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 90px; font-size: 12px;">INVITE</button>
+        </div>
+
+<!-- Задание: Подписка Telegram -->
+<div class="earn-item" style="background: #232742; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #3d446e; text-align: left; gap: 12px;">
+    <img src="sub_task.png" alt="sub" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2); flex-shrink: 0;">
+    <div style="flex: 1; padding-right: 10px;">
+        <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Subscribe to Channel</h4>
+        <p style="margin: 0; font-size: 11px; color: #a2a9d6; line-height: 1.3;">Reward: +25,000 <img src="coin.png" style="width:12px; height:12px; vertical-align:middle;"></p>
+    </div>
+    <button id="btn-task-sub" onclick="startSubTask()" style="padding: 10px 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 90px; font-size: 12px;">CHECK</button>
+</div>
+
+
+<!-- Задание: Подписка YouTube -->
+<div class="earn-item" style="background: #232742; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #3d446e; text-align: left; gap: 12px;">
+    <img src="youtube_task.png" alt="youtube" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2); flex-shrink: 0;">
+    <div style="flex: 1; padding-right: 10px;">
+        <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Subscribe to YouTube</h4>
+        <p style="margin: 0; font-size: 11px; color: #a2a9d6; line-height: 1.3;">Reward: +30,000 <img src="coin.png" style="width:12px; height:12px; vertical-align:middle;"></p>
+    </div>
+    <button id="btn-task-youtube" onclick="startYoutubeTask()" style="padding: 10px 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 90px; font-size: 12px;">CHECK</button>
+</div>
+
+<!-- Задание: Подписка Instagram -->
+<div class="earn-item" style="background: #232742; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #3d446e; text-align: left; gap: 12px;">
+    <img src="instagram_task.png" alt="instagram" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2); flex-shrink: 0;">
+    <div style="flex: 1; padding-right: 10px;">
+        <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Subscribe to Instagram</h4>
+        <p style="margin: 0; font-size: 11px; color: #a2a9d6; line-height: 1.3;">Reward: +25,000 <img src="coin.png" style="width:12px; height:12px; vertical-align:middle;"></p>
+    </div>
+    <button id="btn-task-instagram" onclick="startInstagramTask()" style="padding: 10px 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 90px; font-size: 12px;">CHECK</button>
+</div>
+        <!-- Задание: Подписка Facebook -->
+        <div class="earn-item" style="background: #232742; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #3d446e; text-align: left; gap: 12px;">
+            <img src="facebook_task.png" alt="facebook" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2); flex-shrink: 0;">
+            <div style="flex: 1; padding-right: 10px;">
+                <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Subscribe to Facebook</h4>
+                <p style="margin: 0; font-size: 11px; color: #a2a9d6; line-height: 1.3;">Reward: +20,000 <img src="coin.png" style="width:12px; height:12px; vertical-align:middle;"></p>
+            </div>
+            <button id="btn-task-facebook" onclick="startFacebookTask()" style="padding: 10px 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 90px; font-size: 12px;">CHECK</button>
+        </div>
+
+
+
+<div class="earn-item" style="background: #232742; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px; border: 1px solid #3d446e; text-align: left;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+        <!-- Контейнер, который уменьшает вашу картинку code_task.png до размера инстаграма -->
+        <div style="width: 50px; height: 50px; border-radius: 8px; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-sizing: border-box; padding: 6px;">
+            <img src="code_task.png" alt="code" style="width: 100%; height: 100%; object-fit: contain;">
+        </div>
+        <div style="flex: 1; padding-right: 10px;">
+            <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Daily Video Code</h4>
+            <p style="margin: 0; font-size: 11px; color: #a2a9d6; line-height: 1.3;">Find code in YouTube videos!<br>Reward: +20,000 <img src="coin.png" style="width:12px; height:12px; vertical-align:middle;"></p>
+        </div>
+        <button id="btn-task-code" onclick="verifyDailyCode()" style="padding: 10px 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 90px; font-size: 12px;">ENTER</button>
+    </div>
+    <input type="text" id="input-daily-code" placeholder="Enter secret code letters..." style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid #3d446e; background: #141729; color: #fff; font-weight: bold; box-sizing: border-box; font-size: 13px; text-transform: uppercase; outline: none;">
+</div>
+
+
+    </div>
+
+
+</div>
+
+
+        <div class="navigation-bar">
+            <button class="nav-btn" id="nav-game">game</button>
+            <button class="nav-btn" id="nav-shop">shop</button>
+            <button class="nav-btn" id="nav-clans">clans</button>
+            <button class="nav-btn" id="nav-earn">earn</button>
+            <button class="nav-btn" id="nav-soon">soon.</button>
+        </div>
+    </div>
+    <div id="case-modal" class="case-modal">
+        <div id="win-title" class="win-title"></div>
+        <div class="roulette-wrapper">
+            <div class="roulette-pointer"></div>
+            <div id="roulette-track" class="roulette-track"></div>
+        </div>
+        <button id="modal-btn-close" class="modal-btn-close">DONE</button>
+    </div>
+
+
+    <script>
+        (function() {
+                    const SERVER_URL = "https://space-dogs-backend.vercel.app";
+        let balance = localStorage.getItem('space_dogs_balance') ? Number(localStorage.getItem('space_dogs_balance')) : 0;
+        let isHolding = false, percent = 0, timer, physicsTimer;
+        let explodePoint = 100;
+        let rocketBottom = 15;
+        let inSpace = false;
+        let environmentProgress = 0;
+        let currentSpeed = 0.5;
+        function getNextSundayResetTime() {
+            let now = new Date();
+            let resultDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            let currentDay = now.getDay() === 0 ? 7 : now.getDay();
+            let daysUntilSunday = 7 - currentDay;
+            resultDate.setDate(resultDate.getDate() + daysUntilSunday);
+            resultDate.setHours(24, 0, 0, 0); 
+            return resultDate.getTime();
+        }
+
+        let caseLimits = localStorage.getItem('space_dogs_case_limits') 
+            ? JSON.parse(localStorage.getItem('space_dogs_case_limits')) 
+            : { dog: 0, rocket: 0, nextReset: getNextSundayResetTime() };
+
+        function checkAndResetWeeklyLimits() {
+            let now = Date.now();
+            if (!caseLimits.nextReset || caseLimits.nextReset === 0) {
+                caseLimits.nextReset = getNextSundayResetTime();
+                localStorage.setItem('space_dogs_case_limits', JSON.stringify(caseLimits));
+            }
+            if (now >= caseLimits.nextReset) {
+                caseLimits.dog = 0;
+                caseLimits.rocket = 0;
+                caseLimits.nextReset = getNextSundayResetTime();
+                localStorage.setItem('space_dogs_case_limits', JSON.stringify(caseLimits));
+            }
+        }
+
+
+function updateCaseLimitUI() {
+    checkAndResetWeeklyLimits();
+
+    const dogTxt = document.getElementById('dog-case-limit-txt');
+    const dogBtn = document.getElementById('btn-open-dog-case');
+    const rockTxt = document.getElementById('rocket-case-limit-txt');
+    const rockBtn = document.getElementById('btn-open-rocket-case');
+
+    if (dogTxt) dogTxt.innerText = `${caseLimits.dog}/5`;
+    if (rockTxt) rockTxt.innerText = `${caseLimits.rocket}/5`;
+
+    if (dogBtn) {
+        if (caseLimits.dog >= 5) {
+            dogBtn.style.background = '#4a517a';
+            dogBtn.style.cursor = 'not-allowed';
+            dogBtn.disabled = false;
+        } else {
+            dogBtn.style.background = '#2196F3';
+            dogBtn.style.cursor = 'pointer';
+            dogBtn.disabled = false;
+        }
+    }
+
+    if (rockBtn) {
+        if (caseLimits.rocket >= 5) {
+            rockBtn.style.background = '#4a517a';
+            rockBtn.style.cursor = 'not-allowed';
+            rockBtn.disabled = false;
+        } else {
+            rockBtn.style.background = '#2196F3';
+            rockBtn.style.cursor = 'pointer';
+            rockBtn.disabled = false;
+        }
+    }
+
+}
+
+
+        const planetImages = ['mars.png', 'jupiter.png', 'saturn.png', 'uranus.png', 'neptune.png', 'pluto.png'];
+        let currentPlanetIndex = 0;
+        let ownedDogs = localStorage.getItem('space_dogs_owned_dogs') ? JSON.parse(localStorage.getItem('space_dogs_owned_dogs')) :[0];
+        let ownedRockets = localStorage.getItem('space_dogs_owned_rockets') ? JSON.parse(localStorage.getItem('space_dogs_owned_rockets')) :[0];
+
+        let dogLevel = ownedDogs.length > 0 ? Math.max(...ownedDogs) : 0;
+        let rocketLevel = ownedRockets.length > 0 ? Math.max(...ownedRockets) : 0;
+
+
+        let equippedDog = localStorage.getItem('space_dogs_equipped_dog') !== null ? Number(localStorage.getItem('space_dogs_equipped_dog')) : 0;
+        let equippedRocket = localStorage.getItem('space_dogs_equipped_rocket') !== null ? Number(localStorage.getItem('space_dogs_equipped_rocket')) : 0;
+
+
+
+        function getMaxPercent() {
+            if (equippedDog === 0) return 5;
+            return equippedDog * 10;
+    }
+
+
+        function getSpeedMultiplier() {
+            return 1 + equippedRocket;
+    }
+
+    
+
+        const dogPrices = [0,20000,35000,95000,250000,650000,1500000,3800000,9000000,26000000,50000000];
+        const rocketPrices = [0,100000,300000,1800000,10000000,40000000];
+
+        const tabDogsBtn = document.getElementById('shop-tab-dogs');
+        const tabRocketsBtn = document.getElementById('shop-tab-rockets');
+        const dogsContainer = document.getElementById('shop-dogs-container');
+        const rocketsContainer = document.getElementById('shop-rockets-container');
+
+
+        const screens = {
+                    game: document.getElementById('screen-game'),
+        shop: document.getElementById('screen-shop'),
+        clans: document.getElementById('screen-clans'),
+        earn: document.getElementById('screen-earn')
+    };
+
+    const navButtons = {
+        game: document.getElementById('nav-game'),
+        shop: document.getElementById('nav-shop'),
+        clans: document.getElementById('nav-clans'),
+        earn: document.getElementById('nav-earn'),
+        soon: document.getElementById('nav-soon')
+    };
+
+    const bal = document.getElementById('bal');
+    bal.innerText = balance;
+
+    const btnHold = document.getElementById('btn-hold'), rock = document.getElementById('rock'), rocketBox = document.getElementById('rocket-box'), fire = document.getElementById('fire');
+    const perc = document.getElementById('perc'), skyBg = document.getElementById('sky-bg'), cloudsBg = document.getElementById('clouds-bg'), spaceBg = document.getElementById('space-bg');
+    const ground = document.getElementById('ground'), planet = document.getElementById('planet'), asteroid = document.getElementById('asteroid');
+    const starsContainer = document.getElementById('stars-container');
+
+        function switchTab(targetTab) {
+            reset();
+            
+            const globalBal = document.getElementById('bal');
+            if (globalBal && globalBal.parentElement) {
+                if (targetTab === 'game' || targetTab === 'shop') {
+                    globalBal.parentElement.style.display = 'block';
+                } else {
+                    globalBal.parentElement.style.display = 'none';
+                }
+
+                if (targetTab !== 'shop') {
+                    globalBal.parentElement.style.position = 'absolute';
+                    globalBal.parentElement.style.top = '30px';
+                    globalBal.parentElement.style.left = '0';
+                    globalBal.parentElement.style.right = 'auto';
+                    globalBal.parentElement.style.width = '100%';
+                    globalBal.parentElement.style.textAlign = 'center';
+                    globalBal.parentElement.style.fontSize = '34px';
+                    globalBal.parentElement.style.fontWeight = '800';
+                    const coinImg = globalBal.parentElement.querySelector('img');
+                    if (coinImg) {
+                        coinImg.style.width = '32px';
+                        coinImg.style.height = '32px';
+                        coinImg.style.transform = 'translateY(-4px)';
+                        coinImg.style.marginRight = '5px';
+                    }
+                }
+            }
+
+            Object.values(screens).forEach(s => { if(s) s.classList.remove('active'); });
+            Object.values(navButtons).forEach(b => { if(b) b.classList.remove('active-tab'); });
+            
+            if (targetTab === 'menu') {
+                screens.menu.classList.add('active');
+            } else if (screens[targetTab]) {
+                screens[targetTab].classList.add('active');
+                if (navButtons[targetTab]) navButtons[targetTab].classList.add('active-tab');
+            }
+
+            if (targetTab === 'shop') {
+                updateShopUI();
+            }
+        }
+
+
+
+    navButtons.game.addEventListener('click', () => switchTab('game'));
+    navButtons.shop.addEventListener('click', () => switchTab('shop'));
+    navButtons.clans.addEventListener('click', () => switchTab('clans'));
+    navButtons.earn.addEventListener('click', () => switchTab('earn'));
+
+    const stars = [];
+    for (let i = 0; i < 40; i++) {
+        const starEl = document.createElement('div');
+        starEl.className = 'star';
+        starEl.style.left = Math.random() * 100 + '%';
+        starEl.style.top = Math.random() * 100 + '%';
+        starsContainer.appendChild(starEl);
+                stars.push({ el: starEl, y: Math.random() * 850, speed: 2 + Math.random() * 5 });
+    }
+        btnHold.addEventListener('mousedown', start); btnHold.addEventListener('touchstart', start);
+        window.addEventListener('mouseup', end); window.addEventListener('touchend', end);
+
+        function start(e) {
+            if (!screens.game.classList.contains('active')) return;
+        const gameBal = document.getElementById('bal');
+            if (gameBal && gameBal.parentElement) {
+        const coinImg = gameBal.parentElement.querySelector('img');
+            if (coinImg) {
+            coinImg.style.width = '32px';
+            coinImg.style.height = '32px';
+            coinImg.style.transform = 'translateY(-4px)';
+        }
+    }
+
+            e.preventDefault(); if (isHolding) return; isHolding = true;
+            rock.classList.add('shaking-rocket');
+            if (!inSpace) { fire.style.display = 'block'; }
+            let multiplier = getSpeedMultiplier();
+            let progressInterval = 1000 / multiplier; 
+            let physicsInterval = 30 / multiplier;    
+
+            timer = setInterval(() => {
+                let maxPossible = getMaxPercent();
+
+                if (percent < maxPossible && percent < 100) {
+                    percent++; 
+                    perc.innerText = percent;
+                } else if (percent < 100) {
+                    clearInterval(timer);
+                    clearInterval(physicsTimer);
+                    isHolding = false;
+                    
+                    rock.classList.remove('shaking-rocket');
+                    fire.style.display = 'none';
+                    stars.forEach(star => star.el.style.opacity = 0);
+
+                    let earned = percent * 10;
+                    balance = Number(balance) + earned;
+                    bal.innerText = balance;
+                    saveProgress();
+                    alert(`🚀 Dog power limit reached! Your max altitude for current levels is ${percent}%.\nUpgrade your dog in the Shop to fly further!`);
+                    reset();
+                    return;
+                }
+
+
+                if (percent >= 100) {
+                    clearInterval(timer);
+                    clearInterval(physicsTimer);
+                    isHolding = false;
+                    
+                    currentPlanetIndex = 5;
+                    planet.style.backgroundImage = `url('${planetImages[currentPlanetIndex]}')`;
+                    planet.style.opacity = 1;
+                    planet.style.left = 'calc(50% - 55px)';
+                    planet.style.right = 'auto';
+                    planet.style.top = '50px'; 
+
+                    fire.style.display = 'none';
+                    rock.classList.remove('shaking-rocket');
+
+                    rocketBox.style.transition = 'all 2s ease-in-out';
+                    rocketBox.style.bottom = '80%';
+
+                    rock.classList.add('rocket-landing-anim');
+
+                    setTimeout(() => {
+                        balance = Number(balance) + 1000;
+                        bal.innerText = balance;
+                        alert(`🎉 Congratulations! You reached 100% and successfully landed into Pluto! You earned 1000 spaces!`); 
+                        rocketBox.style.transition = 'none';
+                        reset();
+                    }, 2000);
+                    return; 
+                }
+            }, progressInterval)
+
+
+            physicsTimer = setInterval(() => {
+                if (!inSpace) {
+                    if (rocketBottom >= 30 && rocketBottom < 85) { currentSpeed += 0.02; } else { currentSpeed += 0.05; }
+                    rocketBottom += currentSpeed; 
+                    
+                    if (rocketBottom >= 30 && rocketBottom < 85) {
+                        skyBg.style.opacity = 0; cloudsBg.style.opacity = 1; ground.style.opacity = 0;
+                    }
+                    if (rocketBottom >= 85) {
+                        rocketBottom = 85; inSpace = true;
+                        cloudsBg.style.opacity = 0; spaceBg.style.opacity = 1; ground.style.opacity = 0;
+                        fire.style.display = 'none'; rock.classList.remove('shaking-rocket');
+                        currentSpeed = 1; 
+                    }
+                    rocketBox.style.bottom = rocketBottom + '%';
+                } else {
+                    if (rocketBottom > 35) {
+                                            rocketBottom -= 3;
+                    if (rocketBottom < 35) rocketBottom = 35;
+                    rocketBox.style.bottom = rocketBottom + '%';
+                }
+
+                environmentProgress += 5; 
+
+                stars.forEach(star => {
+                    star.el.style.opacity = Math.random() * 0.5 + 0.5;
+                    star.y += star.speed * 2;
+                    if (star.y > 850) { star.y = -10; star.el.style.left = Math.random() * 100 + '%'; }
+                    star.el.style.transform = `translateY(${star.y}px)`;
+                });
+
+                    if (percent > 0 && percent % 17 === 0 && percent < 98 && !window.planetTriggered) {
+                        window.planetTriggered = true;
+                        environmentProgress = 0;
+                        currentPlanetIndex = (currentPlanetIndex + 1) % (planetImages.length - 1);
+                        planet.style.backgroundImage = `url('${planetImages[currentPlanetIndex]}')`;
+                        planet.style.opacity = 1;
+                        planet.style.right = '10%';
+                        planet.style.left = 'auto';
+                    }
+
+                    if (percent % 17 !== 0 && percent < 98) { window.planetTriggered = false; }
+
+                    if (percent >= 98 && percent < 100) {
+                        currentPlanetIndex = 5;
+                        planet.style.backgroundImage = `url('${planetImages[currentPlanetIndex]}')`;
+                        planet.style.opacity = 1;
+                        planet.style.left = 'calc(50% - 55px)';
+                        planet.style.right = 'auto';
+                        
+                        let plutoProgress = (percent === 98) ? 30 : 70; 
+                        planet.style.top = (-200 + plutoProgress) + 'px';
+                    } else if (percent < 98) {
+                        environmentProgress += 5; 
+                        let planetTop = -300 + environmentProgress * 1.5;
+                        planet.style.top = planetTop + 'px';
+                    }
+
+                    asteroid.style.top = (-200 + environmentProgress * 2) + 'px';
+                    asteroid.style.opacity = 1;
+                }
+                }, physicsInterval);
+
+
+    }
+
+    function end() {
+        if (!isHolding) return;
+        clearInterval(timer); clearInterval(physicsTimer);
+        isHolding = false;
+        rock.classList.remove('shaking-rocket'); fire.style.display = 'none';
+        stars.forEach(star => star.el.style.opacity = 0);
+
+        if (percent >= 100) return;
+
+        let earned = percent * 10;
+        balance = Number(balance) + earned;
+        bal.innerText = balance;
+        saveProgress();
+        alert(`🎉 Successful launch! Rocket saved. You cashed out ${earned} spaces `);
+        reset();
+    }
+
+    function reset() {
+            rock.classList.remove('rocket-landing-anim');
+                clearInterval(timer); clearInterval(physicsTimer);
+        isHolding = false; percent = 0; perc.innerText = percent;
+        rocketBottom = 15; rocketBox.style.bottom = rocketBottom + '%';
+        inSpace = false; environmentProgress = 0; currentSpeed = 0.5;
+        skyBg.style.opacity = 1; cloudsBg.style.opacity = 0; spaceBg.style.opacity = 0; ground.style.opacity = 1;
+        rock.classList.remove('shaking-rocket'); fire.style.display = 'none';
+        
+        stars.forEach(star => star.el.style.opacity = 0);
+        currentPlanetIndex = 0;
+        planet.style.backgroundImage = `url('${planetImages[0]}')`;
+        planet.style.top = '-300px'; planet.style.opacity = 0;
+        asteroid.style.top = '-200px'; asteroid.style.opacity = 0;
+        window.planetTriggered = false;
+    }
+document.getElementById('shop-tab-dogs').addEventListener('click', () => {
+    document.getElementById('shop-tab-dogs').style.background = '#fff'; 
+    document.getElementById('shop-tab-dogs').style.color = '#000';
+    document.getElementById('shop-tab-rockets').style.background = '#232742'; 
+    document.getElementById('shop-tab-rockets').style.color = '#fff';
+    document.getElementById('btn-shop-cases').style.background = '#222644'; 
+    document.getElementById('btn-shop-cases').style.color = '#fff';
+    
+    document.getElementById('shop-dogs-container').style.display = 'block'; 
+    document.getElementById('shop-rockets-container').style.display = 'none';
+    document.getElementById('shop-cases-container').style.display = 'none';
+});
+
+document.getElementById('shop-tab-rockets').addEventListener('click', () => {
+    document.getElementById('shop-tab-rockets').style.background = '#fff'; 
+    document.getElementById('shop-tab-rockets').style.color = '#000';
+    document.getElementById('shop-tab-dogs').style.background = '#232742'; 
+    document.getElementById('shop-tab-dogs').style.color = '#fff';
+    document.getElementById('btn-shop-cases').style.background = '#222644'; 
+    document.getElementById('btn-shop-cases').style.color = '#fff';
+    
+    document.getElementById('shop-dogs-container').style.display = 'none'; 
+    document.getElementById('shop-rockets-container').style.display = 'block';
+    document.getElementById('shop-cases-container').style.display = 'none';
+});
+
+document.getElementById('btn-shop-cases').addEventListener('click', () => {
+    document.getElementById('btn-shop-cases').style.background = '#fff'; 
+    document.getElementById('btn-shop-cases').style.color = '#000';
+    document.getElementById('shop-tab-dogs').style.background = '#232742'; 
+    document.getElementById('shop-tab-dogs').style.color = '#fff';
+    document.getElementById('shop-tab-rockets').style.background = '#232742'; 
+    document.getElementById('shop-tab-rockets').style.color = '#fff';
+    
+    document.getElementById('shop-dogs-container').style.display = 'none'; 
+    document.getElementById('shop-rockets-container').style.display = 'none';
+    document.getElementById('shop-cases-container').style.display = 'block';
+});
+
+const dogNames = ["Dog Rookie", "Dog Max", "Dog Buddy", "Dog Rocky", "Dog Bailey", "Dog Buster", "Dog Toby", "Dog Duke", "Dog Cody", "Dog Rex", "Dog June"];
+
+function updateShopUI() {
+    if (!ownedDogs.includes(0)) ownedDogs.push(0);
+    if (!ownedRockets.includes(0)) ownedRockets.push(0);
+    for (let i = 1; i <= 10; i++) {
+        const card = document.getElementById(`dog-card-${i}`);
+        const btn = document.getElementById(`dog-btn-${i}`);
+        if (!card || !btn) continue;
+
+        if (i <= dogLevel) {
+            card.style.opacity = "1";
+            btn.style.background = "#4caf50";
+            btn.style.color = "#fff";
+            btn.innerHTML = "OWNED";
+            btn.disabled = true;
+        } else if (i === dogLevel + 1) {
+            card.style.opacity = "1";
+            btn.style.background = "#7ec8f8";
+            btn.style.color = "#000";
+            btn.innerText = `BUY<br>${dogPrices[i-1]} <img src="coin.png" style="width:14px; height:14px; vertical-align:middle; margin-left:2px; transform:translateY(-1px);">`;
+            btn.disabled = false;
+        } else {
+            card.style.opacity = "0.5";
+            btn.style.background = "#4a517a";
+            btn.style.color = "#fff";
+            btn.innerText = "LOCKED";
+            btn.disabled = true;
+        }
+    }
+            if (typeof updateCaseLimitUI === 'function') updateCaseLimitUI();
+
+}
+window.buySpecificDog = buySpecificDog;
+function buySpecificDog(lvl) {
+    if (lvl !== dogLevel + 1) return;
+    let cost = dogPrices[lvl - 1];
+
+    if (balance >= cost) {
+        balance -= cost;
+        dogLevel = lvl;
+        document.getElementById('bal').innerText = balance;
+        updateShopUI();
+        saveProgress();
+        alert(`🎉 Congratulations! You unlocked ${dogNames[lvl-1]} (Lvl ${lvl})! Your flight limit is now: ${getMaxPercent()}%`);
+    } else {
+        alert(`❌ Not enough coins! Need ${cost - balance} more spaces`);
+    }
+}
+function updateShopUI() {
+    const balSpan = document.getElementById('bal');
+    if (balSpan && balSpan.parentElement) {
+        balSpan.parentElement.style.position = 'absolute';
+        balSpan.parentElement.style.top = '15px';
+        balSpan.parentElement.style.right = '20px';
+        balSpan.parentElement.style.left = 'auto';
+        balSpan.parentElement.style.textAlign = 'right';
+        balSpan.parentElement.style.fontSize = '20px';
+        balSpan.parentElement.style.fontWeight = '700';
+    const coinImg = balSpan.parentElement.querySelector('img');
+        if (coinImg) {
+            coinImg.style.width = '20px';
+            coinImg.style.height = '20px';
+            coinImg.style.transform = 'translateY(-2px)';
+        }
+
+    }
+    const mainRockEl = document.getElementById('rock');
+    if (mainRockEl) {
+    mainRockEl.style.backgroundImage = `url('rocket${equippedRocket}.png')`;
+    }
+    const pilotDogEl = document.getElementById('rocket-dog-pilot');
+    if (pilotDogEl) {
+        pilotDogEl.style.backgroundImage = `url('dog${equippedDog}.png')`;
+
+
+        const rocketWindowSettings = {
+            0: [40, 28],
+            1: [36, 29.5],
+            2: [36, 29.5],
+            3: [36, 29.5],
+            4: [36, 29.5],
+            5: [36, 29.5]
+        };
+
+        const currentRocketSettings = rocketWindowSettings[equippedRocket] ||[40,28];
+        const pixelSize = currentRocketSettings[0];
+        const topPercent = currentRocketSettings[1];
+
+        let finalSize = pixelSize;
+        let finalTop = topPercent;
+
+        if (equippedDog === 0) {
+            pilotDogEl.style.backgroundSize = '135%';
+            pilotDogEl.style.backgroundPosition = 'center 65%';
+            pilotDogEl.style.top = (topPercent + 1) + '%';
+            } else if (equippedDog === 1) {
+                finalSize = pixelSize + 24;
+                finalTop = topPercent + 8.5;
+                pilotDogEl.style.backgroundPosition = 'center center';
+            } else {
+                pilotDogEl.style.backgroundPosition = 'center center';
+        }
+
+
+        pilotDogEl.style.width = pixelSize + 'px';
+        pilotDogEl.style.height = pixelSize + 'px';
+        pilotDogEl.style.left = `calc(50% - ${pixelSize / 2}px)`;
+        pilotDogEl.style.top = topPercent + '%';
+        pilotDogEl.style.backgroundSize = 'contain';
+        pilotDogEl.style.backgroundPosition = 'center center';
+        pilotDogEl.style.webkitClipPath = 'circle(50% at 50% 50%)';
+        pilotDogEl.style.clipPath = 'circle(50% at 50% 50%)';
+    }
+
+
+
+    // DOGS ROUTINE
+    for (let i = 0; i <= 10; i++) {
+        const card = document.getElementById(`dog-card-${i}`);
+        const btn = document.getElementById(`dog-btn-${i}`);
+        if (!card || !btn) continue;
+
+        if (ownedDogs.includes(i)) {
+            card.style.opacity = "1";
+            btn.disabled = false;
+            
+            if (i === equippedDog) {
+                btn.style.background = "#2196F3";
+                btn.style.color = "#fff";
+                btn.innerText = "USED";
+                btn.onclick = null;
+            } else {
+                btn.style.background = "#4caf50";
+                btn.style.color = "#fff";
+                btn.innerText = "USE";
+                btn.onclick = equipDog.bind(null, i);
+            }
+        } else {
+            card.style.opacity = "1";
+            btn.disabled = false;
+            btn.style.background = "#7ec8f8";
+            btn.style.color = "#000";
+            btn.innerHTML = `BUY<br>${dogPrices[i]} <img src="coin.png" style="width:14px; height:14px; vertical-align:middle; margin-left:2px; transform:translateY(-1px);">`;
+            btn.onclick = buySpecificDog.bind(null, i);
+        }
+    }
+
+    // ROCKETS ROUTINE
+    for (let j = 0; j <= 5; j++) {
+        const rCard = document.getElementById(`rocket-card-${j}`);
+        const rBtn = document.getElementById(`rocket-btn-${j}`);
+        if (!rCard || !rBtn) continue;
+
+        if (ownedRockets.includes(j)) {
+            rCard.style.opacity = "1";
+            rBtn.disabled = false;
+
+            if (j === equippedRocket) {
+                rBtn.style.background = "#2196F3";
+                rBtn.style.color = "#fff";
+                rBtn.innerText = "USED";
+                rBtn.onclick = null;
+            } else {
+                rBtn.style.background = "#4caf50";
+                rBtn.style.color = "#fff";
+                rBtn.innerText = "USE";
+                rBtn.onclick = equipRocket.bind(null, j);
+            }
+        } else {
+            rCard.style.opacity = "1";
+            rBtn.disabled = false;
+            rBtn.style.background = "#ff5e5e";
+            rBtn.style.color = "#fff";
+            rBtn.innerHTML = `BUY<br>${rocketPrices[j]} <img src="coin.png" style="width:14px; height:14px; vertical-align:middle; margin-left:2px; transform:translateY(-1px);">`;
+            rBtn.onclick = buySpecificRocket.bind(null, j);
+        }
+    }
+
+        if (typeof updateCaseLimitUI === 'function') updateCaseLimitUI();
+
+
+}
+        function saveProgress() {
+            localStorage.setItem('space_dogs_balance', balance); 
+            localStorage.setItem('space_dogs_owned_dogs', JSON.stringify(ownedDogs)); 
+            localStorage.setItem('space_dogs_owned_rockets', JSON.stringify(ownedRockets)); 
+            localStorage.setItem('space_dogs_equipped_dog', equippedDog);
+            localStorage.setItem('space_dogs_equipped_rocket', equippedRocket);
+            
+            dogLevel = ownedDogs.length > 0 ? Math.max(...ownedDogs) : 0;
+            rocketLevel = ownedRockets.length > 0 ? Math.max(...ownedRockets) : 0;
+        }
+
+        function buySpecificDog(lvl) {
+            let cost = dogPrices[lvl];
+            if (cost === undefined || cost === 0) return;
+
+            if (balance >= cost) {
+                balance -= cost;
+                if (!ownedDogs.includes(lvl)) ownedDogs.push(lvl);
+                document.getElementById('bal').innerText = balance;
+                saveProgress();
+                updateShopUI();
+                
+                let tempMax = lvl * 10;
+                alert(`🎉 Congratulations! You unlocked ${dogNames[lvl]} (Lvl ${lvl})! Your flight limit will be: ${tempMax}% when you select it with the USE button!`);
+            } else {
+                alert(`❌ Not enough coins! Need ${cost - balance} more spaces`);
+            }
+        }
+
+        function buySpecificRocket(lvl) {
+            let cost = rocketPrices[lvl];
+            if (cost === undefined || cost === 0) return;
+
+            if (balance >= cost) {
+                balance -= cost;
+                if (!ownedRockets.includes(lvl)) ownedRockets.push(lvl);
+                document.getElementById('bal').innerText = balance;
+                saveProgress();
+                updateShopUI();
+                alert(`🎉 Upgrade successful! Rocket Level ${lvl}! Speed multiplier: x${1 + lvl}`);
+            } else {
+                alert(`❌ Not enough coins! Need ${cost - balance} more spaces`);
+            }
+        }
+
+
+        function equipDog(lvl) {
+            if (ownedDogs.includes(lvl)) {
+                equippedDog = lvl;
+                saveProgress();
+                updateShopUI();
+                if (typeof renderClanMembersList === 'function' && playerClan) {
+                    renderClanMembersList();
+                }
+            }
+        }
+
+        function equipRocket(lvl) {
+            if (ownedRockets.includes(lvl)) {
+                equippedRocket = lvl;
+                saveProgress();
+                updateShopUI();
+            }
+        }
+
+        window.buySpecificDog = buySpecificDog;
+        window.buySpecificRocket = buySpecificRocket;
+        window.saveProgress = saveProgress;
+        window.equipDog = equipDog;
+        window.equipRocket = equipRocket;
+
+
+updateShopUI();
+
+        switchTab('game');
+        function openCustomCase(type, cost) {
+            checkAndResetWeeklyLimits();
+            if ((caseLimits[type] || 0) >= 5) {
+                alert("You have reached the weekly purchase limit for this case! The limit will reset on Sunday at 00:00.");
+                return;
+            }
+
+            if (balance < cost) {
+                alert("Not enough telegram stars!");
+                return;
+            }
+
+            balance -= cost;
+            const balEl = document.getElementById('bal');
+            if (balEl) balEl.innerText = balance;
+
+            let rewardLvl = 0;
+            const totalItemsCount = 40; 
+            const winIndex = 32;        
+
+            // Logic matching your screenshot exactly
+            let roll = Math.floor(Math.random() * 100) + 1; // Roll a dice from 1 to 100
+
+            if (type === 'dog') {
+                if (roll <= 35) rewardLvl = 1;        
+                else if (roll <= 60) rewardLvl = 2;   
+                else if (roll <= 72) rewardLvl = 3;   
+                else if (roll <= 80) rewardLvl = 4;   
+                else if (roll <= 85) rewardLvl = 5;   
+                else if (roll <= 88) rewardLvl = 6;   
+                else if (roll <= 91) rewardLvl = 7;   
+                else if (roll <= 96) rewardLvl = 8;   
+                else if (roll <= 99) rewardLvl = 9;   
+                else rewardLvl = 10;                  
+                
+                if (!ownedDogs.includes(rewardLvl)) ownedDogs.push(rewardLvl);
+
+            } else if (type === 'rocket') {
+                if (roll <= 50) rewardLvl = 1;        
+                else if (roll <= 75) rewardLvl = 2;   
+                else if (roll <= 88) rewardLvl = 3;   
+                else if (roll <= 97) rewardLvl = 4;   
+                else rewardLvl = 5;                   
+                
+                if (!ownedRockets.includes(rewardLvl)) ownedRockets.push(rewardLvl);
+            }
+
+            // ПРАВИЛЬНЫЙ РЕГИСТР БУКВ: Теперь лимит идет в реальном времени и не сбрасывается
+            if (type === 'dog') {
+                caseLimits.dog = (caseLimits.dog || 0) + 1;
+            } else if (type === 'rocket') {
+                caseLimits.rocket = (caseLimits.rocket || 0) + 1;
+            }
+            
+            localStorage.setItem('space_dogs_case_limits', JSON.stringify(caseLimits));
+            updateCaseLimitUI();
+
+
+
+
+            // Preparing Roulette DOM
+            const modal = document.getElementById('case-modal');
+            const track = document.getElementById('roulette-track');
+            const winTitle = document.getElementById('win-title');
+            const closeBtn = document.getElementById('modal-btn-close');
+
+            track.innerHTML = '';
+            track.style.transition = 'none';
+            track.style.transform = 'translateX(0px)';
+            winTitle.innerText = 'Opening Case...';
+            closeBtn.style.display = 'none';
+            modal.classList.add('active');
+
+            // Generating random items on track, placing rewardLvl at winIndex
+            for (let i = 0; i < totalItemsCount; i++) {
+                let currentLvl = 1;
+                let fakeRoll = Math.floor(Math.random() * 100) + 1;
+
+                if (i === winIndex) {
+                    currentLvl = rewardLvl;
+                } else {
+                    // Random generation for animation track items decoration
+                    if (type === 'dog') {
+                        if (fakeRoll <= 5) currentLvl = 10;
+                        else if (fakeRoll <= 10) currentLvl = 9;
+                        else if (fakeRoll <= 20) currentLvl = 7;
+                        else if (fakeRoll <= 40) currentLvl = 5;
+                        else currentLvl = Math.floor(Math.random() * 4) + 1;
+                    } else {
+                        if (fakeRoll <= 5) currentLvl = 5;
+                        else if (fakeRoll <= 15) currentLvl = 4;
+                        else currentLvl = Math.floor(Math.random() * 3) + 1;
+                    }
+                }
+                
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'roulette-item';
+                
+                let imgName = type === 'dog' ? `dog${currentLvl}.png` : `rocket${currentLvl}.png`;
+                let displayName = type === 'dog' ? (dogNames[currentLvl] || `Dog Lvl ${currentLvl}`) : `Rocket Lvl ${currentLvl}`;
+                
+                if (currentLvl === 10 || (type === 'rocket' && currentLvl === 5)) itemDiv.style.borderColor = '#e1b400';
+                else if (currentLvl >= 7 || (type === 'rocket' && currentLvl >= 3)) itemDiv.style.borderColor = '#9c27b0';
+                else if (currentLvl >= 3) itemDiv.style.borderColor = '#2196f3';
+
+                itemDiv.innerHTML = `<img src="${imgName}"><span>${displayName}</span>`;
+                track.appendChild(itemDiv);
+            }
+
+            // Spin animation execution
+            setTimeout(() => {
+                const itemWidth = 100; 
+                const wrapperWidth = 340;
+                const targetX = -((winIndex * itemWidth) - (wrapperWidth / 2) + (itemWidth / 2));
+                const randomOffset = (Math.random() * 60) - 30; 
+                
+                track.style.transition = 'transform 5s cubic-bezier(0.15, 0.85, 0.35, 1)';
+                track.style.transform = `translateX(${targetX + randomOffset}px)`;
+            }, 50);
+
+            // Complete event handlers
+            setTimeout(() => {
+                let finalName = type === 'dog' ? (dogNames[rewardLvl] || `Dog Lvl ${rewardLvl}`) : `Rocket Level ${rewardLvl}`;
+                winTitle.innerHTML = `<span style="color: #7ec8f8;">WIN:</span> ${finalName}`;
+                closeBtn.style.display = 'block';
+                
+                if (typeof saveProgress === 'function') saveProgress();
+                if (typeof updateShopUI === 'function') updateShopUI();
+            }, 5100);
+
+            closeBtn.onclick = function() {
+                modal.classList.remove('active');
+            };
+        }
+
+       if (window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        tg.setHeaderColor('#090a10');
+        tg.setBackgroundColor('#090a10');
+    }
+window.openCustomCase = openCustomCase;
+        // ==========================================
+        // ЛОГИКА ДЛЯ ОКНА КЛАНОВ И ПОИСКА С ЛУПОЙ
+        // ==========================================
+        let selectedLogoBase64 = "";
+
+        function previewClanLogo(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = 120;
+                        canvas.height = 120;
+                        ctx.drawImage(img, 0, 0, 120, 120);
+                        selectedLogoBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                        const previewDiv = document.getElementById('clan-logo-preview');
+                        if (previewDiv) {
+                            previewDiv.innerHTML = "";
+                            previewDiv.style.backgroundImage = `url('${selectedLogoBase64}')`;
+                        }
+                    };
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function openClanModal() {
+            const modal = document.getElementById('clan-create-modal');
+            if (modal) modal.style.display = 'flex';
+        }
+
+        function closeClanModal() {
+            const modal = document.getElementById('clan-create-modal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        let clansData = []; 
+        let playerClan = localStorage.getItem('space_dogs_player_clan') || null;
+
+        function loadClansFromServer() {
+            fetch(`${SERVER_URL}/api/clans`)
+                .then(res => res.json())
+                .then(data => {
+                    clansData = data;
+                    executeRenderClansVisual();
+                    if (playerClan) {
+                        renderChatMessages();
+                    }
+                })
+                .catch(err => console.error("Ошибка загрузки кланов:", err));
+        }
+
+        setInterval(() => {
+            if (playerClan) {
+                loadClansFromServer();
+            }
+        }, 2000);
+
+
+        function renderClans(filterText = "") {
+            loadClansFromServer();
+        }
+
+        function executeRenderClansVisual(filterText = "") {
+            const browserView = document.getElementById('clan-browser-view');
+            const chatView = document.getElementById('clan-chat-view');
+            const container = document.getElementById('clans-list-container');
+            if (!container || !browserView || !chatView) return;
+
+            playerClan = localStorage.getItem('space_dogs_player_clan') || null;
+
+            if (playerClan) {
+                const currentClan = clansData.find(c => c.name === playerClan);
+                if (currentClan) {
+                    browserView.style.display = 'none';
+                    chatView.style.display = 'flex';
+                    if (document.getElementById('chat-clan-name')) document.getElementById('chat-clan-name').innerText = playerClan;
+                    if (document.getElementById('chat-clan-logo')) document.getElementById('chat-clan-logo').innerText = currentClan.logo;
+                    renderChatMessages();
+                    if (typeof switchClanSubTab === 'function') switchClanSubTab('chat');
+                    return;
+                } else {
+                    playerClan = null;
+                    localStorage.removeItem('space_dogs_player_clan');
+                }
+            }
+
+            browserView.style.display = 'block';
+            chatView.style.display = 'none';
+            container.innerHTML = "";
+            const filtered = clansData.filter(c => c.name.toLowerCase().includes(filterText.toLowerCase()));
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<p style="color: #a2a9d6; font-size: 13px; text-align: center; margin-top: 10px;">No clans found...</p>`;
+                return;
+            }
+
+            filtered.forEach((clan, index) => {
+                const clanCard = document.createElement('div');
+                clanCard.style.cssText = "background: #232742; padding: 12px 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #3d446e; margin-bottom: 10px;";
+                clanCard.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 12px; max-width: 55%; overflow: hidden;">
+                        <div style="width: 42px; height: 42px; border-radius: 50%; background: #141729; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 1px solid #3d446e; flex-shrink: 0;">${clan.logo}</div>
+                        <div style="overflow: hidden;">
+                            <h4 style="margin: 0; color: #fff; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${clan.name}</h4>
+                            <p style="margin: 2px 0 0 0; font-size: 11px; color: #a2a9d6;">Req: Lvl ${clan.req} Dog | 👥 ${clan.members}/50</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                        <div style="font-size: 11px; color: #ffb300; font-weight: bold; background: rgba(0,0,0,0.3); padding: 5px 8px; border-radius: 8px; border: 1px solid rgba(255,179,0,0.2); display: flex; align-items: center; gap: 4px;">
+                            <span>${Number(clan.bank || 0).toLocaleString()}</span>
+                            <img src="coin.png" style="width:12px; height:12px; vertical-align:middle;">
+                        </div>
+                        <button id="join-btn-${index}" style="padding: 8px 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 11px; cursor: pointer; background: #4caf50; color: #fff;">JOIN</button>
+                    </div>`;
+                container.appendChild(clanCard);
+                document.getElementById(`join-btn-${index}`).onclick = () => joinClan(clan);
+            });
+        }
+
+
+
+        function createNewClan() {
+            playerClan = localStorage.getItem('space_dogs_player_clan') || null;
+            if (playerClan) return alert("❌ You are already a member of a clan!");
+
+            const name = document.getElementById('clan-name-input').value.trim();
+            const req = Number(document.getElementById('clan-req-select').value);
+            if (!name) return alert("❌ Please enter a clan name!");
+            if (name.length < 3 || name.length > 15) return alert("❌ Clan name (3-15 chars)!");
+            if (balance < 1000000) return alert(`❌ Need ${1000000 - balance} more spaces.`);
+
+            const badge = document.getElementById('clan-badge-select').value;
+
+            // Отправляем данные на ваш Vercel сервер
+            fetch(`${SERVER_URL}/api/clans/create`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ logo: badge, name: name, reqLvl: req, balance: balance })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return alert("❌ " + data.error);
+                
+                balance -= 1000000;
+                document.getElementById('bal').innerText = balance;
+                
+                playerClan = name;
+                localStorage.setItem('space_dogs_player_clan', name);
+                
+                if (typeof addSystemMsg === 'function') addSystemMsg(name, `🚀 Clan "${name}" created on server!`);
+                if (typeof saveProgress === 'function') saveProgress();
+                closeClanModal();
+                
+                // Обновляем массив кланов новыми данными от сервера и перерисовываем экран
+                clansData = data.clans;
+                executeRenderClansVisual();
+            })
+            .catch(err => alert("Error logging in via the server"));
+        }
+
+
+        function joinClan(clan) {
+            playerClan = localStorage.getItem('space_dogs_player_clan') || null;
+            if (playerClan) return alert("❌ You are already a member of a clan!");
+            if (dogLevel < clan.req) return alert(`❌ Requires Lvl ${clan.req} Dog!`);
+            if (clan.members >= 50) return alert("❌ Clan is full!");
+
+            fetch(`${SERVER_URL}/api/clans/join`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    clanName: clan.name,
+                    playerName: GLOBAL_PLAYER_NAME, // 🔥 Отправляем стабильное имя
+                    playerBalance: Number(balance),
+                    playerDogLvl: Number(equippedDog)
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) return alert("❌ " + data.error);
+                
+                playerClan = clan.name;
+                localStorage.setItem('space_dogs_player_clan', clan.name);
+                
+                alert(`👋 Welcome to the "${clan.name}" clan!`);
+                
+                clansData = data.clans;
+                executeRenderClansVisual();
+            })
+            .catch(err => alert("Ошибка вступления через сервер."));
+        }
+
+
+
+        function renderClanMembersList() {
+            const listContainer = document.getElementById('clan-subview-members');
+            if (!listContainer || !playerClan) return;
+            listContainer.innerHTML = "";
+
+            const currentClan = clansData.find(c => c.name === playerClan);
+            if (!currentClan) return;
+
+            // 1. ПОЛУЧАЕМ НИК ИЗ ТЕЛЕГРАМА
+            let tgName = "Space_Pilot"; // Имя по умолчанию для тестов в браузере
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                const user = window.Telegram.WebApp.initDataUnsafe.user;
+                // Проверяем username (например, @dog_pilot), если его нет — берём First Name
+                tgName = user.username ? `@${user.username}` : user.first_name;
+            }
+
+            // Подгружаем изображение собаки, выбранной в магазине
+            let leaderDogImg = `dog${equippedDog}.png`;
+
+            // 2. Вывод карточки Лидера с реальным ником из Telegram
+            const leaderRow = document.createElement('div');
+            leaderRow.style.cssText = "display: flex; align-items: center; justify-content: space-between; background: rgba(255,179,0,0.08); border: 1px solid #ffb300; padding: 10px 12px; border-radius: 8px; flex-shrink: 0; margin-bottom: 4px;";
+            leaderRow.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 36px; height: 36px; border-radius: 50%; background-image: url('${leaderDogImg}'); background-size: contain; background-position: center; background-repeat: no-repeat; background-color: rgba(0,0,0,0.2); border: 1px solid #ffb300; flex-shrink: 0;"></div>
+                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                        <!-- 🔥 ТЕПЕРЬ ТУТ ВЫВОДИТСЯ РЕАЛЬНЫЙ ТГ-НИК ИГРОКА -->
+                        <div style="font-size: 13px; font-weight: bold; color: #fff;">${tgName} <span style="font-size: 10px; color: #ffb300; margin-left: 4px; font-weight: 900;">LEADER</span></div>
+                        <div style="font-size: 11px; color: #a2a9d6;">Dog level: Lvl ${equippedDog}</div>
+                    </div>
+                </div>
+                <div style="font-size: 12px; color: #ffb300; font-weight: bold; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px; display: flex; align-items: center; gap: 4px;">
+                    <span>${Number(balance).toLocaleString()}</span>
+                    <img src="coin.png" style="width:12px; height:12px; vertical-align:middle;">
+                </div>
+            `;
+            listContainer.appendChild(leaderRow);
+
+            // 3. Вывод остальных реальных участников
+            if (currentClan.membersList && Array.isArray(currentClan.membersList)) {
+                currentClan.membersList.forEach(member => {
+                    let memberDogImg = `dog${member.dogLvl || 0}.png`;
+
+                    const memberRow = document.createElement('div');
+                    memberRow.style.cssText = "background: #232742; border: 1px solid #3d446e; padding: 10px 12px; border-radius: 8px; flex-shrink: 0; margin-bottom: 4px;";
+                    memberRow.innerHTML = `
+                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="width: 36px; height: 36px; border-radius: 50%; background-image: url('${memberDogImg}'); background-size: contain; background-position: center; background-repeat: no-repeat; background-color: rgba(0,0,0,0.1); border: 1px solid #3d446e; flex-shrink: 0;"></div>
+                                <div style="display: flex; flex-direction: column; gap: 2px;">
+                                    <div style="font-size: 13px; color: #fff; font-weight: bold;">🐾 ${member.name} <span style="font-size: 9px; color: #2196F3; margin-left: 4px; font-weight: 500;">PILOT</span></div>
+                                    <div style="font-size: 11px; color: #a2a9d6;">Dog level: Lvl ${member.dogLvl || 0}</div>
+                                </div>
+                            </div>
+                            <div style="font-size: 12px; color: #fff; font-weight: bold; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,0.05);">
+                                <span>${Number(member.balance || 0).toLocaleString()}</span>
+                                <img src="coin.png" style="width:12px; height:12px; vertical-align:middle;">
+                            </div>
+                        </div>
+                    `;
+                    listContainer.appendChild(memberRow);
+                });
+            }
+        }
+
+
+        function triggerLeaveFromChat() {
+            if (!playerClan) return;
+            
+            let myTgName = "Pilot_" + Math.floor(100 + Math.random() * 900);
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                const user = window.Telegram.WebApp.initDataUnsafe.user;
+                myTgName = user.username ? `@${user.username}` : user.first_name;
+            }
+
+            if (confirm(`Leave "${playerClan}"?`)) {
+                fetch(`${SERVER_URL}/api/clans/leave`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        clanName: playerClan,
+                        playerName: myTgName,
+                        playerBalance: Number(balance)
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('chat-messages-box').innerHTML = ""; 
+                    
+                    playerClan = null; 
+                    localStorage.removeItem('space_dogs_player_clan'); 
+                    
+                    clansData = data.clans;
+                    executeRenderClansVisual(); 
+                    alert("You have successfully left the clan!");
+                })
+                .catch(err => alert("Error exiting via the server."));
+            }
+        }
+
+
+
+        function leaveClan(clanName) {
+            const idx = clansData.findIndex(c => c.name === clanName);
+            if (idx !== -1) {
+                const clan = clansData[idx];
+                clan.members--;
+                clan.bank = Math.max(0, (Number(clan.bank) || 0) - Number(balance));
+                if (clan.members <= 0) {
+                    clansData.splice(idx, 1);
+                    localStorage.removeItem(`space_dogs_chat_${clanName}`);
+                } else {
+                    addSystemMsg(clanName, `🚪 Someone left the clan.`);
+                }
+            }
+            playerClan = null;
+            localStorage.removeItem('space_dogs_player_clan');
+            localStorage.setItem('space_dogs_clans_list', JSON.stringify(clansData));
+            renderClans();
+        }
+
+        function addSystemMsg(clanName, text) {
+            let hist = localStorage.getItem(`space_dogs_chat_${clanName}`) ? JSON.parse(localStorage.getItem(`space_dogs_chat_${clanName}`)) : [];
+            hist.push({ sender: "SYSTEM", text: text, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
+            localStorage.setItem(`space_dogs_chat_${clanName}`, JSON.stringify(hist));
+        }
+
+        function sendClanMessage() {
+            const input = document.getElementById('chat-message-input');
+            if (!input || !playerClan || !input.value.trim()) return;
+            
+            const timeStr = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+            fetch(`${SERVER_URL}/api/clans/message`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    clanName: playerClan,
+                    sender: GLOBAL_PLAYER_NAME, // Используем стабильное имя
+                    text: input.value.trim(),
+                    time: timeStr
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                input.value = ""; 
+                loadClansFromServer(); 
+            })
+            .catch(err => console.error("Ошибка отправки сообщения:", err));
+        }
+
+        function renderChatMessages() {
+            const box = document.getElementById('chat-messages-box');
+            if (!box || !playerClan) return;
+            box.innerHTML = "";
+
+            const currentClan = clansData.find(c => c.name === playerClan);
+            
+            if (currentClan && currentClan.messages && Array.isArray(currentClan.messages)) {
+                currentClan.messages.forEach(msg => {
+                    const row = document.createElement('div');
+                    row.style.cssText = "width: 100%; display: flex; margin-bottom: 4px;";
+
+                    if (msg.sender === "SYSTEM") {
+                        row.style.justifyContent = "center";
+                        row.innerHTML = `<div style="background: rgba(126,200,248,0.1); border: 1px dashed #3d446e; color: #a2a9d6; font-size: 11px; padding: 4px 10px; border-radius: 8px;">${msg.text}</div>`;
+                    } else if (msg.sender === GLOBAL_PLAYER_NAME) { // Четкое определение своего сообщения
+                        row.style.justifyContent = "flex-end";
+                        row.innerHTML = `<div style="background: #2196F3; color: #fff; padding: 8px 12px; border-radius: 12px 12px 2px 12px; max-width: 75%; font-size: 13px; word-break: break-word;">${msg.text}</div>`;
+                    } else {
+                        row.style.justifyContent = "flex-start";
+                        row.innerHTML = `
+                            <div style="background: #232742; border: 1px solid #3d446e; color: #fff; padding: 8px 12px; border-radius: 12px 12px 12px 2px; max-width: 75%; word-break: break-word;">
+                                <div style="font-size: 10px; color: #7ec8f8; font-weight: bold; margin-bottom: 2px;">${msg.sender} <span style="color: #a2a9d6; font-weight: normal; margin-left: 4px;">${msg.time}</span></div>
+                                <div style="font-size: 13px;">${msg.text}</div>
+                            </div>`;
+                    }
+                    box.appendChild(row);
+                });
+                box.scrollTop = box.scrollHeight;
+            }
+        }
+
+        function triggerLeaveFromChat() {
+            if (!playerClan) return;
+
+            if (confirm(`Leave "${playerClan}"?`)) {
+                fetch(`${SERVER_URL}/api/clans/leave`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        clanName: playerClan,
+                        playerName: GLOBAL_PLAYER_NAME, // Передаем то же самое имя, что и при входе!
+                        playerBalance: Number(balance)
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('chat-messages-box').innerHTML = ""; 
+                    playerClan = null; 
+                    localStorage.removeItem('space_dogs_player_clan'); 
+                    
+                    clansData = data.clans;
+                    executeRenderClansVisual(); 
+                })
+                .catch(err => alert("Ошибка выхода через сервер."));
+            }
+        }
+            
+        function searchClans() {
+        const input = document.getElementById('clan-search-input');
+        if (input) renderClans(input.value);
+        }
+
+        function addSystemMsg(clanName, text) {
+            let hist = localStorage.getItem(`space_dogs_chat_${clanName}`) ? JSON.parse(localStorage.getItem(`space_dogs_chat_${clanName}`)) : [];
+            hist.push({ sender: "SYSTEM", text: text, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
+            localStorage.setItem(`space_dogs_chat_${clanName}`, JSON.stringify(hist));
+        }
+                // Логика управления окнами Events и Members
+        function openClanEventsModal() { document.getElementById('clan-events-modal').style.display = 'flex'; }
+        function closeClanEventsModal() { document.getElementById('clan-events-modal').style.display = 'none'; }
+        function closeClanMembersModal() { document.getElementById('clan-members-modal').style.display = 'none'; }
+        
+        // Логика управления под-вкладками клана (CHAT / MEMBERS / EVENTS)
+        function switchClanSubTab(tabName) {
+            const views = {
+                chat: document.getElementById('clan-subview-chat'),
+                members: document.getElementById('clan-subview-members'),
+                events: document.getElementById('clan-subview-events')
+            };
+            const buttons = {
+                chat: document.getElementById('clan-subtab-chat'),
+                members: document.getElementById('clan-subtab-members'),
+                events: document.getElementById('clan-subtab-events')
+            };
+
+            if (!views.chat || !views.members || !views.events) return;
+
+            Object.keys(views).forEach(key => {
+                views[key].style.display = 'none';
+                buttons[key].style.background = '#141729';
+                buttons[key].style.color = '#fff';
+                buttons[key].style.border = '1px solid #3d446e';
+            });
+
+            views[tabName].style.display = 'flex';
+            buttons[tabName].style.background = '#2196F3';
+            buttons[tabName].style.color = '#fff';
+            buttons[tabName].style.border = 'none';
+
+            // Принудительно забираем свежую собаку из памяти при каждом открытии списка участников
+            if (tabName === 'members') {
+                if (localStorage.getItem('space_dogs_equipped_dog') !== null) {
+                    equippedDog = Number(localStorage.getItem('space_dogs_equipped_dog'));
+                }
+                renderClanMembersList();
+            }
+        }
+
+
+        window.switchClanSubTab = switchClanSubTab;
+        window.renderClanMembersList = renderClanMembersList;
+        if (playerClan) { setTimeout(() => { switchClanSubTab('chat'); }, 150); }
+        window.previewClanLogo = previewClanLogo; window.openClanModal = openClanModal; window.closeClanModal = closeClanModal;
+        window.createNewClan = createNewClan; window.searchClans = searchClans; window.joinClan = joinClan;
+        window.leaveClan = leaveClan; window.triggerLeaveFromChat = triggerLeaveFromChat; window.sendClanMessage = sendClanMessage;
+
+
+        setTimeout(() => { if (typeof renderClans === 'function') renderClans(); }, 100);
+    })();
+    </script>
+</body>
+</html>
