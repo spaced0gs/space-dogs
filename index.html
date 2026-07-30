@@ -742,12 +742,6 @@ button, a, input, [onclick], .earn-item, .shop-btn {
     <script>
         (function() {
                     const SERVER_URL = "https://space-dogs-backend.vercel.app";
-        let GLOBAL_PLAYER_NAME = "Space_Pilot"; 
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-            const user = window.Telegram.WebApp.initDataUnsafe.user;
-            GLOBAL_PLAYER_NAME = user.username ? `@${user.username}` : user.first_name;
-        }
-
         let balance = localStorage.getItem('space_dogs_balance') ? Number(localStorage.getItem('space_dogs_balance')) : 0;
         let isHolding = false, percent = 0, timer, physicsTimer;
         let explodePoint = 100;
@@ -1600,7 +1594,7 @@ window.openCustomCase = openCustomCase;
 
         let clansData = []; 
         let playerClan = localStorage.getItem('space_dogs_player_clan') || null;
-        // Переменная для отслеживания текущей открытой под-вкладки внутри клана
+        // Запоминаем, какая под-вкладка открыта, чтобы таймер не перекидывал в CHAT
         let currentClanSubTab = 'chat'; 
 
         function loadClansFromServer() {
@@ -1613,7 +1607,7 @@ window.openCustomCase = openCustomCase;
                 .catch(err => console.error("Ошибка загрузки кланов:", err));
         }
 
-        // Таймер автообновления больше НЕ сбрасывает вкладку игрока на 'chat'
+        // Таймер обновляет данные, но больше НЕ сбрасывает вкладку игрока!
         setInterval(() => {
             if (playerClan) {
                 loadClansFromServer();
@@ -1640,7 +1634,7 @@ window.openCustomCase = openCustomCase;
                     if (document.getElementById('chat-clan-name')) document.getElementById('chat-clan-name').innerText = playerClan;
                     if (document.getElementById('chat-clan-logo')) document.getElementById('chat-clan-logo').innerText = currentClan.logo;
                     
-                    // Обновляем содержимое текущей активной вкладки без её принудительного переключения
+                    // Обновляем текущую активную под-вкладку без изменения видимости окон
                     if (currentClanSubTab === 'chat') {
                         renderChatMessages();
                     } else if (currentClanSubTab === 'members') {
@@ -1686,8 +1680,6 @@ window.openCustomCase = openCustomCase;
             });
         }
 
-
-
         function createNewClan() {
             playerClan = localStorage.getItem('space_dogs_player_clan') || null;
             if (playerClan) return alert("❌ You are already a member of a clan!");
@@ -1700,11 +1692,16 @@ window.openCustomCase = openCustomCase;
 
             const badge = document.getElementById('clan-badge-select').value;
 
-            // Отправляем данные на ваш Vercel сервер
+            let myTgName = "Space_Pilot";
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                const user = window.Telegram.WebApp.initDataUnsafe.user;
+                myTgName = user.username ? `@${user.username}` : user.first_name;
+            }
+
             fetch(`${SERVER_URL}/api/clans/create`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ logo: badge, name: name, reqLvl: req, balance: balance })
+                body: JSON.stringify({ logo: badge, name: name, reqLvl: req, balance: balance, creatorName: myTgName })
             })
             .then(res => res.json())
             .then(data => {
@@ -1716,17 +1713,15 @@ window.openCustomCase = openCustomCase;
                 playerClan = name;
                 localStorage.setItem('space_dogs_player_clan', name);
                 
-                if (typeof addSystemMsg === 'function') addSystemMsg(name, `🚀 Clan "${name}" created on server!`);
                 if (typeof saveProgress === 'function') saveProgress();
                 closeClanModal();
                 
-                // Обновляем массив кланов новыми данными от сервера и перерисовываем экран
                 clansData = data.clans;
+                currentClanSubTab = 'chat';
                 executeRenderClansVisual();
             })
             .catch(err => alert("Error logging in via the server"));
         }
-
 
         function joinClan(clan) {
             playerClan = localStorage.getItem('space_dogs_player_clan') || null;
@@ -1734,12 +1729,18 @@ window.openCustomCase = openCustomCase;
             if (dogLevel < clan.req) return alert(`❌ Requires Lvl ${clan.req} Dog!`);
             if (clan.members >= 50) return alert("❌ Clan is full!");
 
+            let myTgName = "Space_Pilot";
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                const user = window.Telegram.WebApp.initDataUnsafe.user;
+                myTgName = user.username ? `@${user.username}` : user.first_name;
+            }
+
             fetch(`${SERVER_URL}/api/clans/join`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     clanName: clan.name,
-                    playerName: GLOBAL_PLAYER_NAME, // 🔥 Отправляем стабильное имя
+                    playerName: myTgName,
                     playerBalance: Number(balance),
                     playerDogLvl: Number(equippedDog)
                 })
@@ -1754,12 +1755,11 @@ window.openCustomCase = openCustomCase;
                 alert(`👋 Welcome to the "${clan.name}" clan!`);
                 
                 clansData = data.clans;
+                currentClanSubTab = 'chat';
                 executeRenderClansVisual();
             })
             .catch(err => alert("Ошибка вступления через сервер."));
         }
-
-
 
         function renderClanMembersList() {
             const listContainer = document.getElementById('clan-subview-members');
@@ -1769,7 +1769,6 @@ window.openCustomCase = openCustomCase;
             const currentClan = clansData.find(c => c.name === playerClan);
             if (!currentClan) return;
 
-            // Выводим всех участников из массива бэкенда напрямую (Лидер подсвечивается золотым)
             if (currentClan.membersList && Array.isArray(currentClan.membersList)) {
                 currentClan.membersList.forEach(member => {
                     let memberDogImg = `dog${member.dogLvl || 0}.png`;
@@ -1802,7 +1801,6 @@ window.openCustomCase = openCustomCase;
                 });
             }
         }
-
 
         function triggerLeaveFromChat() {
             if (!playerClan) return;
@@ -1933,13 +1931,19 @@ window.openCustomCase = openCustomCase;
         function triggerLeaveFromChat() {
             if (!playerClan) return;
 
+            let myTgName = "Space_Pilot";
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                const user = window.Telegram.WebApp.initDataUnsafe.user;
+                myTgName = user.username ? `@${user.username}` : user.first_name;
+            }
+
             if (confirm(`Leave "${playerClan}"?`)) {
                 fetch(`${SERVER_URL}/api/clans/leave`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         clanName: playerClan,
-                        playerName: GLOBAL_PLAYER_NAME, // Передаем то же самое имя, что и при входе!
+                        playerName: myTgName,
                         playerBalance: Number(balance)
                     })
                 })
@@ -1951,28 +1955,88 @@ window.openCustomCase = openCustomCase;
                     
                     clansData = data.clans;
                     executeRenderClansVisual(); 
+                    alert("You have successfully left the clan!");
                 })
                 .catch(err => alert("Ошибка выхода через сервер."));
             }
         }
+
+        function sendClanMessage() {
+            const input = document.getElementById('chat-message-input');
+            if (!input || !playerClan || !input.value.trim()) return;
             
-        function searchClans() {
-        const input = document.getElementById('clan-search-input');
-        if (input) renderClans(input.value);
+            const timeStr = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+            let myTgName = "Space_Pilot";
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                const user = window.Telegram.WebApp.initDataUnsafe.user;
+                myTgName = user.username ? `@${user.username}` : user.first_name;
+            }
+
+            fetch(`${SERVER_URL}/api/clans/message`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    clanName: playerClan,
+                    sender: myTgName,
+                    text: input.value.trim(),
+                    time: timeStr
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                input.value = ""; 
+                clansData = data.clans;
+                renderChatMessages();
+            })
+            .catch(err => console.error("Ошибка отправки сообщения:", err));
         }
 
-        function addSystemMsg(clanName, text) {
-            let hist = localStorage.getItem(`space_dogs_chat_${clanName}`) ? JSON.parse(localStorage.getItem(`space_dogs_chat_${clanName}`)) : [];
-            hist.push({ sender: "SYSTEM", text: text, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) });
-            localStorage.setItem(`space_dogs_chat_${clanName}`, JSON.stringify(hist));
+        function renderChatMessages() {
+            const box = document.getElementById('chat-messages-box');
+            if (!box || !playerClan) return;
+            box.innerHTML = "";
+
+            const currentClan = clansData.find(c => c.name === playerClan);
+            
+            let myTgName = "Space_Pilot";
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                const user = window.Telegram.WebApp.initDataUnsafe.user;
+                myTgName = user.username ? `@${user.username}` : user.first_name;
+            }
+
+            if (currentClan && currentClan.messages && Array.isArray(currentClan.messages)) {
+                currentClan.messages.forEach(msg => {
+                    const row = document.createElement('div');
+                    row.style.cssText = "width: 100%; display: flex; margin-bottom: 4px;";
+
+                    if (msg.sender === "SYSTEM") {
+                        row.style.justifyContent = "center";
+                        row.innerHTML = `<div style="background: rgba(126,200,248,0.1); border: 1px dashed #3d446e; color: #a2a9d6; font-size: 11px; padding: 4px 10px; border-radius: 8px;">${msg.text}</div>`;
+                    } else if (msg.sender === myTgName) { 
+                        row.style.justifyContent = "flex-end";
+                        row.innerHTML = `<div style="background: #2196F3; color: #fff; padding: 8px 12px; border-radius: 12px 12px 2px 12px; max-width: 75%; font-size: 13px; word-break: break-word;">${msg.text}</div>`;
+                    } else {
+                        row.style.justifyContent = "flex-start";
+                        row.innerHTML = `
+                            <div style="background: #232742; border: 1px solid #3d446e; color: #fff; padding: 8px 12px; border-radius: 12px 12px 12px 2px; max-width: 75%; word-break: break-word;">
+                                <div style="font-size: 10px; color: #7ec8f8; font-weight: bold; margin-bottom: 2px;">${msg.sender} <span style="color: #a2a9d6; font-weight: normal; margin-left: 4px;">${msg.time}</span></div>
+                                <div style="font-size: 13px;">${msg.text}</div>
+                            </div>`;
+                    }
+                    box.appendChild(row);
+                });
+                box.scrollTop = box.scrollHeight;
+            }
         }
-                // Логика управления окнами Events и Members
-        function openClanEventsModal() { document.getElementById('clan-events-modal').style.display = 'flex'; }
-        function closeClanEventsModal() { document.getElementById('clan-events-modal').style.display = 'none'; }
-        function closeClanMembersModal() { document.getElementById('clan-members-modal').style.display = 'none'; }
-        
+            
+        function searchClans() {
+            const input = document.getElementById('clan-search-input');
+            if (input) executeRenderClansVisual(input.value);
+        }
+
         function switchClanSubTab(tabName) {
-            currentClanSubTab = tabName; // Запоминаем текущую вкладку, чтобы таймер её не сбросил
+            currentClanSubTab = tabName; 
             const views = {
                 chat: document.getElementById('clan-subview-chat'),
                 members: document.getElementById('clan-subview-members'),
@@ -2013,10 +2077,9 @@ window.openCustomCase = openCustomCase;
         if (playerClan) { setTimeout(() => { switchClanSubTab('chat'); }, 150); }
         window.previewClanLogo = previewClanLogo; window.openClanModal = openClanModal; window.closeClanModal = closeClanModal;
         window.createNewClan = createNewClan; window.searchClans = searchClans; window.joinClan = joinClan;
-        window.leaveClan = leaveClan; window.triggerLeaveFromChat = triggerLeaveFromChat; window.sendClanMessage = sendClanMessage;
+        window.triggerLeaveFromChat = triggerLeaveFromChat; window.sendClanMessage = sendClanMessage;
 
-
-        setTimeout(() => { if (typeof renderClans === 'function') renderClans(); }, 100);
+        setTimeout(() => { loadClansFromServer(); }, 100);
     })();
     </script>
 </body>
