@@ -742,6 +742,12 @@ button, a, input, [onclick], .earn-item, .shop-btn {
     <script>
         (function() {
                     const SERVER_URL = "https://space-dogs-backend.vercel.app";
+        let GLOBAL_PLAYER_NAME = "Space_Pilot"; 
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+            const user = window.Telegram.WebApp.initDataUnsafe.user;
+            GLOBAL_PLAYER_NAME = user.username ? `@${user.username}` : user.first_name;
+        }
+
         let balance = localStorage.getItem('space_dogs_balance') ? Number(localStorage.getItem('space_dogs_balance')) : 0;
         let isHolding = false, percent = 0, timer, physicsTimer;
         let explodePoint = 100;
