@@ -1594,6 +1594,8 @@ window.openCustomCase = openCustomCase;
 
         let clansData = []; 
         let playerClan = localStorage.getItem('space_dogs_player_clan') || null;
+        // Переменная для отслеживания текущей открытой под-вкладки внутри клана
+        let currentClanSubTab = 'chat'; 
 
         function loadClansFromServer() {
             fetch(`${SERVER_URL}/api/clans`)
@@ -1601,19 +1603,16 @@ window.openCustomCase = openCustomCase;
                 .then(data => {
                     clansData = data;
                     executeRenderClansVisual();
-                    if (playerClan) {
-                        renderChatMessages();
-                    }
                 })
                 .catch(err => console.error("Ошибка загрузки кланов:", err));
         }
 
+        // Таймер автообновления больше НЕ сбрасывает вкладку игрока на 'chat'
         setInterval(() => {
             if (playerClan) {
                 loadClansFromServer();
             }
         }, 2000);
-
 
         function renderClans(filterText = "") {
             loadClansFromServer();
@@ -1634,8 +1633,13 @@ window.openCustomCase = openCustomCase;
                     chatView.style.display = 'flex';
                     if (document.getElementById('chat-clan-name')) document.getElementById('chat-clan-name').innerText = playerClan;
                     if (document.getElementById('chat-clan-logo')) document.getElementById('chat-clan-logo').innerText = currentClan.logo;
-                    renderChatMessages();
-                    if (typeof switchClanSubTab === 'function') switchClanSubTab('chat');
+                    
+                    // Обновляем содержимое текущей активной вкладки без её принудительного переключения
+                    if (currentClanSubTab === 'chat') {
+                        renderChatMessages();
+                    } else if (currentClanSubTab === 'members') {
+                        renderClanMembersList();
+                    }
                     return;
                 } else {
                     playerClan = null;
@@ -1759,56 +1763,33 @@ window.openCustomCase = openCustomCase;
             const currentClan = clansData.find(c => c.name === playerClan);
             if (!currentClan) return;
 
-            // 1. ПОЛУЧАЕМ НИК ИЗ ТЕЛЕГРАМА
-            let tgName = "Space_Pilot"; // Имя по умолчанию для тестов в браузере
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-                const user = window.Telegram.WebApp.initDataUnsafe.user;
-                // Проверяем username (например, @dog_pilot), если его нет — берём First Name
-                tgName = user.username ? `@${user.username}` : user.first_name;
-            }
-
-            // Подгружаем изображение собаки, выбранной в магазине
-            let leaderDogImg = `dog${equippedDog}.png`;
-
-            // 2. Вывод карточки Лидера с реальным ником из Telegram
-            const leaderRow = document.createElement('div');
-            leaderRow.style.cssText = "display: flex; align-items: center; justify-content: space-between; background: rgba(255,179,0,0.08); border: 1px solid #ffb300; padding: 10px 12px; border-radius: 8px; flex-shrink: 0; margin-bottom: 4px;";
-            leaderRow.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="width: 36px; height: 36px; border-radius: 50%; background-image: url('${leaderDogImg}'); background-size: contain; background-position: center; background-repeat: no-repeat; background-color: rgba(0,0,0,0.2); border: 1px solid #ffb300; flex-shrink: 0;"></div>
-                    <div style="display: flex; flex-direction: column; gap: 2px;">
-                        <!-- 🔥 ТЕПЕРЬ ТУТ ВЫВОДИТСЯ РЕАЛЬНЫЙ ТГ-НИК ИГРОКА -->
-                        <div style="font-size: 13px; font-weight: bold; color: #fff;">${tgName} <span style="font-size: 10px; color: #ffb300; margin-left: 4px; font-weight: 900;">LEADER</span></div>
-                        <div style="font-size: 11px; color: #a2a9d6;">Dog level: Lvl ${equippedDog}</div>
-                    </div>
-                </div>
-                <div style="font-size: 12px; color: #ffb300; font-weight: bold; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px; display: flex; align-items: center; gap: 4px;">
-                    <span>${Number(balance).toLocaleString()}</span>
-                    <img src="coin.png" style="width:12px; height:12px; vertical-align:middle;">
-                </div>
-            `;
-            listContainer.appendChild(leaderRow);
-
-            // 3. Вывод остальных реальных участников
+            // Выводим всех участников из массива бэкенда напрямую (Лидер подсвечивается золотым)
             if (currentClan.membersList && Array.isArray(currentClan.membersList)) {
                 currentClan.membersList.forEach(member => {
                     let memberDogImg = `dog${member.dogLvl || 0}.png`;
+                    const isLeader = member.name === currentClan.creator;
 
                     const memberRow = document.createElement('div');
-                    memberRow.style.cssText = "background: #232742; border: 1px solid #3d446e; padding: 10px 12px; border-radius: 8px; flex-shrink: 0; margin-bottom: 4px;";
+                    if (isLeader) {
+                        memberRow.style.cssText = "display: flex; align-items: center; justify-content: space-between; background: rgba(255,179,0,0.08); border: 1px solid #ffb300; padding: 10px 12px; border-radius: 8px; flex-shrink: 0; margin-bottom: 4px;";
+                    } else {
+                        memberRow.style.cssText = "display: flex; align-items: center; justify-content: space-between; background: #232742; border: 1px solid #3d446e; padding: 10px 12px; border-radius: 8px; flex-shrink: 0; margin-bottom: 4px;";
+                    }
+
                     memberRow.innerHTML = `
-                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <div style="width: 36px; height: 36px; border-radius: 50%; background-image: url('${memberDogImg}'); background-size: contain; background-position: center; background-repeat: no-repeat; background-color: rgba(0,0,0,0.1); border: 1px solid #3d446e; flex-shrink: 0;"></div>
-                                <div style="display: flex; flex-direction: column; gap: 2px;">
-                                    <div style="font-size: 13px; color: #fff; font-weight: bold;">🐾 ${member.name} <span style="font-size: 9px; color: #2196F3; margin-left: 4px; font-weight: 500;">PILOT</span></div>
-                                    <div style="font-size: 11px; color: #a2a9d6;">Dog level: Lvl ${member.dogLvl || 0}</div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="width: 36px; height: 36px; border-radius: 50%; background-image: url('${memberDogImg}'); background-size: contain; background-position: center; background-repeat: no-repeat; background-color: rgba(0,0,0,0.1); border: 1px solid ${isLeader ? '#ffb300' : '#3d446e'}; flex-shrink: 0;"></div>
+                            <div style="display: flex; flex-direction: column; gap: 2px;">
+                                <div style="font-size: 13px; color: #fff; font-weight: bold;">
+                                    ${member.name} 
+                                    <span style="font-size: 9px; color: ${isLeader ? '#ffb300' : '#2196F3'}; margin-left: 4px; font-weight: 900;">${isLeader ? 'LEADER' : 'PILOT'}</span>
                                 </div>
+                                <div style="font-size: 11px; color: #a2a9d6;">Dog level: Lvl ${member.dogLvl || 0}</div>
                             </div>
-                            <div style="font-size: 12px; color: #fff; font-weight: bold; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,0.05);">
-                                <span>${Number(member.balance || 0).toLocaleString()}</span>
-                                <img src="coin.png" style="width:12px; height:12px; vertical-align:middle;">
-                            </div>
+                        </div>
+                        <div style="font-size: 12px; color: ${isLeader ? '#ffb300' : '#fff'}; font-weight: bold; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px; display: flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,0.05);">
+                            <span>${Number(member.balance || 0).toLocaleString()}</span>
+                            <img src="coin.png" style="width:12px; height:12px; vertical-align:middle;">
                         </div>
                     `;
                     listContainer.appendChild(memberRow);
@@ -1975,8 +1956,8 @@ window.openCustomCase = openCustomCase;
         function closeClanEventsModal() { document.getElementById('clan-events-modal').style.display = 'none'; }
         function closeClanMembersModal() { document.getElementById('clan-members-modal').style.display = 'none'; }
         
-        // Логика управления под-вкладками клана (CHAT / MEMBERS / EVENTS)
         function switchClanSubTab(tabName) {
+            currentClanSubTab = tabName; // Запоминаем текущую вкладку, чтобы таймер её не сбросил
             const views = {
                 chat: document.getElementById('clan-subview-chat'),
                 members: document.getElementById('clan-subview-members'),
@@ -2002,15 +1983,15 @@ window.openCustomCase = openCustomCase;
             buttons[tabName].style.color = '#fff';
             buttons[tabName].style.border = 'none';
 
-            // Принудительно забираем свежую собаку из памяти при каждом открытии списка участников
             if (tabName === 'members') {
                 if (localStorage.getItem('space_dogs_equipped_dog') !== null) {
                     equippedDog = Number(localStorage.getItem('space_dogs_equipped_dog'));
                 }
                 renderClanMembersList();
+            } else if (tabName === 'chat') {
+                renderChatMessages();
             }
         }
-
 
         window.switchClanSubTab = switchClanSubTab;
         window.renderClanMembersList = renderClanMembersList;
