@@ -1806,8 +1806,9 @@ window.openCustomCase = openCustomCase;
 
         function triggerLeaveFromChat() {
             if (!playerClan) return;
-            
-            let myTgName = "Pilot_" + Math.floor(100 + Math.random() * 900);
+
+            // Вычисляем имя прямо внутри функции
+            let myTgName = "Space_Pilot";
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
                 const user = window.Telegram.WebApp.initDataUnsafe.user;
                 myTgName = user.username ? `@${user.username}` : user.first_name;
@@ -1819,14 +1820,13 @@ window.openCustomCase = openCustomCase;
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         clanName: playerClan,
-                        playerName: myTgName,
+                        playerName: myTgName, // Передаем вычисленное имя пилота
                         playerBalance: Number(balance)
                     })
                 })
                 .then(res => res.json())
                 .then(data => {
                     document.getElementById('chat-messages-box').innerHTML = ""; 
-                    
                     playerClan = null; 
                     localStorage.removeItem('space_dogs_player_clan'); 
                     
@@ -1834,7 +1834,7 @@ window.openCustomCase = openCustomCase;
                     executeRenderClansVisual(); 
                     alert("You have successfully left the clan!");
                 })
-                .catch(err => alert("Error exiting via the server."));
+                .catch(err => alert("Ошибка выхода через сервер."));
             }
         }
 
@@ -1871,12 +1871,19 @@ window.openCustomCase = openCustomCase;
             
             const timeStr = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
+            // Вычисляем имя прямо внутри функции, чтобы оно точно работало
+            let myTgName = "Space_Pilot";
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                const user = window.Telegram.WebApp.initDataUnsafe.user;
+                myTgName = user.username ? `@${user.username}` : user.first_name;
+            }
+
             fetch(`${SERVER_URL}/api/clans/message`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     clanName: playerClan,
-                    sender: GLOBAL_PLAYER_NAME, // Используем стабильное имя
+                    sender: myTgName, // Используем локально вычисленное имя
                     text: input.value.trim(),
                     time: timeStr
                 })
@@ -1884,10 +1891,12 @@ window.openCustomCase = openCustomCase;
             .then(res => res.json())
             .then(data => {
                 input.value = ""; 
-                loadClansFromServer(); 
+                clansData = data.clans;
+                renderChatMessages();
             })
             .catch(err => console.error("Ошибка отправки сообщения:", err));
         }
+
 
         function renderChatMessages() {
             const box = document.getElementById('chat-messages-box');
