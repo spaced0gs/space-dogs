@@ -1985,54 +1985,73 @@ window.openCustomCase = openCustomCase;
 
             const currentClan = clansData.find(c => c.name === playerClan);
             
-            // Вычисляем имя текущего игрока для проверки авторства сообщений
-            let myTgName = "Space_Pilot";
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-                const user = window.Telegram.WebApp.initDataUnsafe.user;
-                myTgName = user.username ? `@${user.username}` : user.first_name;
-            }
+            const myCurrentName = getTestPlayerName();
 
-            // Получаем аватарку текущего игрока (его выбранную собаку)
             let myDogLvl = localStorage.getItem('space_dogs_equipped_dog') !== null ? Number(localStorage.getItem('space_dogs_equipped_dog')) : 0;
             let myDogImg = `dog${myDogLvl}.png`;
 
             if (currentClan && currentClan.messages && Array.isArray(currentClan.messages)) {
                 currentClan.messages.forEach(msg => {
                     const row = document.createElement('div');
-                    row.style.cssText = "width: 100%; display: flex; margin-bottom: 8px; align-items: flex-end;";
+                    row.style.cssText = "width: 100% !important; display: flex !important; margin-bottom: 20px !important; box-sizing: border-box !important;";
+
+                    let displayTime = msg.time || new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
                     if (msg.sender === "SYSTEM") {
                         row.style.justifyContent = "center";
                         row.innerHTML = `<div style="background: rgba(126,200,248,0.1); border: 1px dashed #3d446e; color: #a2a9d6; font-size: 11px; padding: 4px 10px; border-radius: 8px;">${msg.text}</div>`;
-                    } else if (msg.sender === myTgName) { 
-                        // ВАШЕ СООБЩЕНИЕ (теперь с аватаркой, ником и временем справа)
-                        row.style.justifyContent = "flex-end";
+                    } else if (msg.sender === myCurrentName || msg.sender === "Space_Pilot" || msg.sender.includes("Guest_Pilot")) { 
+                        // НАШЕ СООБЩЕНИЕ (Справа)
+                        row.style.setProperty('justify-content', 'flex-end', 'important');
                         row.innerHTML = `
-                            <div style="background: #2196F3; color: #fff; padding: 8px 12px; border-radius: 12px 12px 2px 12px; max-width: 70%; word-break: break-word; text-align: left; border: 1px solid rgba(255,255,255,0.1);">
-                                <div style="font-size: 10px; color: #b3e5fc; font-weight: bold; margin-bottom: 2px; display: flex; justify-content: space-between; gap: 10px;">
-                                    <span>${msg.sender} (Вы)</span> 
-                                    <span style="color: rgba(255,255,255,0.6); font-weight: normal;">${msg.time || ""}</span>
+                            <div style="position: relative !important; max-width: 70% !important; margin-right: 40px !important; display: block !important;">
+                                <!-- Круг собака снаружи сверху справа -->
+                                <div style="position: absolute !important; top: -10px !important; right: -40px !important; width: 32px !important; height: 32px !important; border-radius: 50% !important; background-image: url('${myDogImg}') !important; background-size: contain !important; background-position: center !important; background-repeat: no-repeat !important; background-color: rgba(255,255,255,0.1) !important; border: 1px solid #2196F3 !important; z-index: 10 !important;"></div>
+                                
+                                <!-- Бабл сообщения -->
+                                <div style="background: #2196F3 !important; color: #fff !important; padding: 10px 14px 12px 14px !important; border-radius: 16px 2px 16px 16px !important; border: 1px solid rgba(255,255,255,0.1) !important; text-align: left !important; box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;">
+                                    <!-- Ник сверху внутри бабла -->
+                                    <div style="font-size: 11px !important; color: #b3e5fc !important; font-weight: bold !important; margin-bottom: 4px !important; border-bottom: 1px solid rgba(255,255,255,0.15) !important; padding-bottom: 2px !important;">
+                                        ${msg.sender} (Вы)
+                                    </div>
+                                    <!-- Текст сообщения -->
+                                    <div style="font-size: 14px !important; line-height: 1.4 !important; color: #fff !important; margin-bottom: 4px !important;">
+                                        ${msg.text}
+                                    </div>
+                                    <!-- Время снизу справа внутри бабла -->
+                                    <div style="font-size: 10px !important; color: rgba(255,255,255,0.65) !important; text-align: right !important; font-weight: normal !important; margin-top: 2px !important;">
+                                        ${displayTime}
+                                    </div>
                                 </div>
-                                <div style="font-size: 13px;">${msg.text}</div>
                             </div>
-                            <div style="width: 32px; height: 32px; border-radius: 50%; background-image: url('${myDogImg}'); background-size: contain; background-position: center; background-repeat: no-repeat; background-color: rgba(0,0,0,0.2); border: 1px solid #2196F3; flex-shrink: 0; margin-left: 8px;"></div>
                         `;
                     } else {
-                        // ЧУЖОЕ СООБЩЕНИЕ (остается слева с аватаркой этого игрока)
-                        // Ищем уровень собаки этого отправителя среди участников клана, чтобы показать его реальную аватарку
+                        // ЧУЖОЕ СООБЩЕНИЕ (Слева)
                         let senderMember = currentClan.membersList ? currentClan.membersList.find(m => m.name === msg.sender) : null;
                         let senderDogLvl = senderMember ? (senderMember.dogLvl || 0) : 0;
                         let senderDogImg = `dog${senderDogLvl}.png`;
 
-                        row.style.justifyContent = "flex-start";
+                        row.style.setProperty('justify-content', 'flex-start', 'important');
                         row.innerHTML = `
-                            <div style="width: 32px; height: 32px; border-radius: 50%; background-image: url('${senderDogImg}'); background-size: contain; background-position: center; background-repeat: no-repeat; background-color: rgba(0,0,0,0.2); border: 1px solid #3d446e; flex-shrink: 0; margin-right: 8px;"></div>
-                            <div style="background: #232742; border: 1px solid #3d446e; color: #fff; padding: 8px 12px; border-radius: 12px 12px 12px 2px; max-width: 70%; word-break: break-word;">
-                                <div style="font-size: 10px; color: #7ec8f8; font-weight: bold; margin-bottom: 2px; display: flex; justify-content: space-between; gap: 10px;">
-                                    <span>${msg.sender}</span> 
-                                    <span style="color: #a2a9d6; font-weight: normal;">${msg.time || ""}</span>
+                            <div style="position: relative !important; max-width: 70% !important; margin-left: 40px !important; display: block !important;">
+                                <!-- Круг собака снаружи сверху слева -->
+                                <div style="position: absolute !important; top: -10px !important; left: -40px !important; width: 32px !important; height: 32px !important; border-radius: 50% !important; background-image: url('${senderDogImg}') !important; background-size: contain !important; background-position: center !important; background-repeat: no-repeat !important; background-color: rgba(255,255,255,0.1) !important; border: 1px solid #3d446e !important; z-index: 10 !important;"></div>
+                                
+                                <!-- Бабл сообщения -->
+                                <div style="background: #232742 !important; color: #fff !important; padding: 10px 14px 12px 14px !important; border-radius: 2px 16px 16px 16px !important; border: 1px solid #3d446e !important; text-align: left !important; box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;">
+                                    <!-- Ник сверху внутри бабла -->
+                                    <div style="font-size: 11px !important; color: #7ec8f8 !important; font-weight: bold !important; margin-bottom: 4px !important; border-bottom: 1px solid rgba(255,255,255,0.05) !important; padding-bottom: 2px !important;">
+                                        ${msg.sender}
+                                    </div>
+                                    <!-- Текст сообщения -->
+                                    <div style="font-size: 14px !important; line-height: 1.4 !important; color: #fff !important; margin-bottom: 4px !important;">
+                                        ${msg.text}
+                                    </div>
+                                    <!-- Время снизу справа внутри бабла -->
+                                    <div style="font-size: 10px !important; color: #a2a9d6 !important; text-align: right !important; font-weight: normal !important; margin-top: 2px !important;">
+                                        ${displayTime}
+                                    </div>
                                 </div>
-                                <div style="font-size: 13px;">${msg.text}</div>
                             </div>
                         `;
                     }
@@ -2041,6 +2060,8 @@ window.openCustomCase = openCustomCase;
                 box.scrollTop = box.scrollHeight;
             }
         }
+
+
 
 
         function triggerLeaveFromChat() {
@@ -2113,37 +2134,82 @@ window.openCustomCase = openCustomCase;
             box.innerHTML = "";
 
             const currentClan = clansData.find(c => c.name === playerClan);
-            
-            let myTgName = "Space_Pilot";
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-                const user = window.Telegram.WebApp.initDataUnsafe.user;
-                myTgName = user.username ? `@${user.username}` : user.first_name;
-            }
+            const myCurrentName = getTestPlayerName();
+
+            let myDogLvl = localStorage.getItem('space_dogs_equipped_dog') !== null ? Number(localStorage.getItem('space_dogs_equipped_dog')) : 0;
+            let myDogImg = `dog${myDogLvl}.png`;
 
             if (currentClan && currentClan.messages && Array.isArray(currentClan.messages)) {
                 currentClan.messages.forEach(msg => {
                     const row = document.createElement('div');
-                    row.style.cssText = "width: 100%; display: flex; margin-bottom: 4px;";
+                    row.style.cssText = "width: 100% !important; display: flex !important; margin-bottom: 25px !important; box-sizing: border-box !important; position: relative !important;";
+
+                    let displayTime = msg.time || new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
                     if (msg.sender === "SYSTEM") {
                         row.style.justifyContent = "center";
                         row.innerHTML = `<div style="background: rgba(126,200,248,0.1); border: 1px dashed #3d446e; color: #a2a9d6; font-size: 11px; padding: 4px 10px; border-radius: 8px;">${msg.text}</div>`;
-                    } else if (msg.sender === myTgName) { 
-                        row.style.justifyContent = "flex-end";
-                        row.innerHTML = `<div style="background: #2196F3; color: #fff; padding: 8px 12px; border-radius: 12px 12px 2px 12px; max-width: 75%; font-size: 13px; word-break: break-word;">${msg.text}</div>`;
-                    } else {
-                        row.style.justifyContent = "flex-start";
+                    } else if (msg.sender === myCurrentName || msg.sender === "Space_Pilot" || msg.sender.includes("Guest_Pilot")) { 
+                        // НАШЕ СООБЩЕНИЕ (Справа)
+                        row.style.setProperty('justify-content', 'flex-end', 'important');
                         row.innerHTML = `
-                            <div style="background: #232742; border: 1px solid #3d446e; color: #fff; padding: 8px 12px; border-radius: 12px 12px 12px 2px; max-width: 75%; word-break: break-word;">
-                                <div style="font-size: 10px; color: #7ec8f8; font-weight: bold; margin-bottom: 2px;">${msg.sender} <span style="color: #a2a9d6; font-weight: normal; margin-left: 4px;">${msg.time}</span></div>
-                                <div style="font-size: 13px;">${msg.text}</div>
-                            </div>`;
+                            <div style="position: relative !important; max-width: 70% !important; margin-right: 42px !important; display: block !important;">
+                                <!-- Аватарка: Справа снаружи сверху -->
+                                <div style="position: absolute !important; top: -12px !important; right: -42px !important; width: 34px !important; height: 34px !important; border-radius: 50% !important; background-image: url('${myDogImg}') !important; background-size: contain !important; background-position: center !important; background-repeat: no-repeat !important; background-color: rgba(255,255,255,0.1) !important; border: 2px solid #2196F3 !important; z-index: 10 !important;"></div>
+                                
+                                <!-- Бабл сообщения -->
+                                <div style="background: #2196F3 !important; color: #fff !important; padding: 10px 14px 10px 14px !important; border-radius: 16px 2px 16px 16px !important; border: 1px solid rgba(255,255,255,0.1) !important; text-align: left !important; box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important; display: flex !important; flex-direction: column !important;">
+                                    <!-- Ник: Длинная черта сверху -->
+                                    <div style="font-size: 11px !important; color: #b3e5fc !important; font-weight: bold !important; margin-bottom: 6px !important; border-bottom: 1px solid rgba(255,255,255,0.2) !important; padding-bottom: 4px !important; width: 100% !important; white-space: nowrap !important; overflow: hidden; text-overflow: ellipsis !important;">
+                                        ${msg.sender} (Вы)
+                                    </div>
+                                    <!-- Текст сообщения -->
+                                    <div style="font-size: 14px !important; line-height: 1.4 !important; color: #fff !important; word-break: break-word !important; margin-bottom: 2px !important;">
+                                        ${msg.text}
+                                    </div>
+                                    <!-- Время: Квадрат снизу справа -->
+                                    <div style="font-size: 10px !important; color: rgba(255,255,255,0.65) !important; text-align: right !important; font-weight: normal !important; margin-top: 4px !important; width: 100% !important;">
+                                        ${displayTime}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // ЧУЖОЕ СООБЩЕНИЕ (Слева)
+                        let senderMember = currentClan.membersList ? currentClan.membersList.find(m => m.name === msg.sender) : null;
+                        let senderDogLvl = senderMember ? (senderMember.dogLvl || 0) : 0;
+                        let senderDogImg = `dog${senderDogLvl}.png`;
+
+                        row.style.setProperty('justify-content', 'flex-start', 'important');
+                        row.innerHTML = `
+                            <div style="position: relative !important; max-width: 70% !important; margin-left: 42px !important; display: block !important;">
+                                <!-- Аватарка: Слева снаружи сверху -->
+                                <div style="position: absolute !important; top: -12px !important; left: -42px !important; width: 34px !important; height: 34px !important; border-radius: 50% !important; background-image: url('${senderDogImg}') !important; background-size: contain !important; background-position: center !important; background-repeat: no-repeat !important; background-color: rgba(255,255,255,0.1) !important; border: 2px solid #3d446e !important; z-index: 10 !important;"></div>
+                                
+                                <!-- Бабл сообщения -->
+                                <div style="background: #232742 !important; color: #fff !important; padding: 10px 14px 10px 14px !important; border-radius: 2px 16px 16px 16px !important; border: 1px solid #3d446e !important; text-align: left !important; box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important; display: flex !important; flex-direction: column !important;">
+                                    <!-- Ник: Длинная черта сверху -->
+                                    <div style="font-size: 11px !important; color: #7ec8f8 !important; font-weight: bold !important; margin-bottom: 6px !important; border-bottom: 1px solid rgba(255,255,255,0.08) !important; padding-bottom: 4px !important; width: 100% !important; white-space: nowrap !important; overflow: hidden; text-overflow: ellipsis !important;">
+                                        ${msg.sender}
+                                    </div>
+                                    <!-- Текст сообщения -->
+                                    <div style="font-size: 14px !important; line-height: 1.4 !important; color: #fff !important; word-break: break-word !important; margin-bottom: 2px !important;">
+                                        ${msg.text}
+                                    </div>
+                                    <!-- Время: Квадрат снизу справа -->
+                                    <div style="font-size: 10px !important; color: #a2a9d6 !important; text-align: right !important; font-weight: normal !important; margin-top: 4px !important; width: 100% !important;">
+                                        ${displayTime}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
                     }
                     box.appendChild(row);
                 });
                 box.scrollTop = box.scrollHeight;
             }
         }
+
             
         function searchClans() {
             const input = document.getElementById('clan-search-input');
