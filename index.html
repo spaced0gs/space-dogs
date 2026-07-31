@@ -1968,19 +1968,24 @@ window.openCustomCase = openCustomCase;
                 })
             })
             .then(res => {
-                // Если сервер вернул ошибку флуда (код 429) или любую другую
+                // Если сервер вернул ошибку флуда (429) или мата (400)
                 if (!res.ok) {
                     return res.json().then(errData => {
-                        alert(`⚠️ ${errData.error || "Error sending message"}`);
+                        alert(`⚠️ ${errData.error || "Slow down! Don't spam."}`);
+                        // Выбрасываем ошибку, чтобы код не шёл дальше к renderChatMessages
+                        throw new Error(errData.error); 
                     });
                 }
-                return res.json().then(data => {
+                return res.json();
+            })
+            .then(data => {
+                if (data && data.clans) {
                     input.value = ""; 
                     clansData = data.clans;
                     renderChatMessages();
-                });
+                }
             })
-            .catch(err => console.error("Ошибка отправки сообщения:", err));
+            .catch(err => console.log("Запрос заблокирован фильтром флуда сервера"));
         }
 
 
