@@ -1951,7 +1951,6 @@ window.openCustomCase = openCustomCase;
             
             const timeStr = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
-            // Вычисляем имя прямо внутри функции, чтобы оно точно работало
             let myTgName = "Space_Pilot";
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
                 const user = window.Telegram.WebApp.initDataUnsafe.user;
@@ -1963,19 +1962,27 @@ window.openCustomCase = openCustomCase;
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     clanName: playerClan,
-                    sender: myTgName, // Используем локально вычисленное имя
+                    sender: myTgName,
                     text: input.value.trim(),
                     time: timeStr
                 })
             })
-            .then(res => res.json())
-            .then(data => {
-                input.value = ""; 
-                clansData = data.clans;
-                renderChatMessages();
+            .then(res => {
+                // Если сервер вернул ошибку флуда (код 429) или любую другую
+                if (!res.ok) {
+                    return res.json().then(errData => {
+                        alert(`⚠️ ${errData.error || "Error sending message"}`);
+                    });
+                }
+                return res.json().then(data => {
+                    input.value = ""; 
+                    clansData = data.clans;
+                    renderChatMessages();
+                });
             })
             .catch(err => console.error("Ошибка отправки сообщения:", err));
         }
+
 
 
         function renderChatMessages() {
