@@ -2005,10 +2005,16 @@ window.openCustomCase = openCustomCase;
                 })
             })
             .then(res => {
+                // Если сервер вернул ошибку спама (429) или мута (423)
                 if (!res.ok) {
                     return res.json().then(errData => {
-                        // КЛЮЧЕВОЙ МОМЕНТ: Показываем красивую ошибку прямо внутри игры!
-                        showGameToast(`⚠️ ${errData.error || "Slow down! Don't spam."}`);
+                        // Показываем красивую ошибку прямо внутри игры!
+                        if (typeof showGameToast === 'function') {
+                            showGameToast(`⚠️ ${errData.error || "Slow down! Don't spam."}`);
+                        } else {
+                            alert(`⚠️ ${errData.error || "Slow down! Don't spam."}`);
+                        }
+                        // Прерываем код, чтобы он не шёл дальше и не ломал консоль
                         throw new Error(errData.error); 
                     });
                 }
@@ -2022,9 +2028,10 @@ window.openCustomCase = openCustomCase;
                 }
             })
             .catch(err => {
-                console.log("Request blocked by server flood/mute filter");
+                console.log("Запрос заблокирован спам-фильтром сервера:", err.message);
             });
         }
+
 
 
 
