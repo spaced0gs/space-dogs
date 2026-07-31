@@ -1386,11 +1386,38 @@ function updateShopUI() {
                 equippedDog = lvl;
                 saveProgress();
                 updateShopUI();
-                if (typeof renderClanMembersList === 'function' && playerClan) {
-                    renderClanMembersList();
+                
+                // Если игрок в клане, отправляем правильный ник и баланс для обновления аватарки
+                if (playerClan) {
+                    // Тщательно вычисляем именно ТО имя, под которым телефон/ПК зашел в этот клан
+                    const myCurrentName = getTestPlayerName();
+                    
+                    fetch(`${SERVER_URL}/api/clans/join`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            clanName: playerClan,
+                            playerName: myCurrentName, // Передаем строго текущий ник, чтобы не было клонов!
+                            playerBalance: Number(balance), // Передаем твой реальный баланс с экрана
+                            playerDogLvl: Number(lvl) // Передаем уровень новой выбранной собаки
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        // Обновляем данные кланов из ответа сервера
+                        clansData = data.clans;
+                        // Если открыта вкладка участников, мгновенно обновляем экран
+                        if (currentClanSubTab === 'members') {
+                            renderClanMembersList();
+                        }
+                    })
+                    .catch(err => console.error("Ошибка сети при обновлении собаки:", err));
                 }
             }
         }
+
+
+
 
         function equipRocket(lvl) {
             if (ownedRockets.includes(lvl)) {
@@ -1594,8 +1621,37 @@ window.openCustomCase = openCustomCase;
 
         let clansData = []; 
         let playerClan = localStorage.getItem('space_dogs_player_clan') || null;
-        // Запоминаем, какая под-вкладка открыта, чтобы таймер не перекидывал в CHAT
         let currentClanSubTab = 'chat'; 
+
+        function getTestPlayerName() {
+            let myTgName = "";
+            
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                const user = window.Telegram.WebApp.initDataUnsafe.user;
+                myTgName = user.username ? `@${user.username}` : user.first_name;
+            } else {
+                // 🔥 ИСПРАВЛЕНИЕ ДЛЯ ТЕСТА ПК И МОБИЛКИ В ОБЫЧНОМ БРАУЗЕРЕ:
+                // Проверяем устройство: если это мобилка, даем ей имя Гостя
+                const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                
+                if (isMobileDevice) {
+                    let savedName = localStorage.getItem('space_dogs_browser_guest_name');
+                    if (!savedName) {
+                        let randId = Math.floor(1000 + Math.random() * 9000);
+                        savedName = `Guest_Pilot_${randId}`;
+                        localStorage.setItem('space_dogs_browser_guest_name', savedName);
+                    }
+                    myTgName = savedName; // Телефон всегда будет Guest_Pilot
+                } else {
+                    // Если это обычный браузер на ПК — ВСЕГДА возвращаем жесткое имя Лидера!
+                    // Теперь имя при смене собаки совпадет с именем при создании клана!
+                    myTgName = "Space_Pilot"; 
+                }
+            }
+            return myTgName;
+        }
+
+
 
         function loadClansFromServer() {
             fetch(`${SERVER_URL}/api/clans`)
@@ -1606,6 +1662,7 @@ window.openCustomCase = openCustomCase;
                 })
                 .catch(err => console.error("Ошибка загрузки кланов:", err));
         }
+
 
         // Таймер обновляет данные, но больше НЕ сбрасывает вкладку игрока!
         setInterval(() => {
@@ -1692,16 +1749,19 @@ window.openCustomCase = openCustomCase;
 
             const badge = document.getElementById('clan-badge-select').value;
 
-            let myTgName = "Space_Pilot";
-            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-                const user = window.Telegram.WebApp.initDataUnsafe.user;
-                myTgName = user.username ? `@${user.username}` : user.first_name;
-            }
+            // Извлекаем правильное имя создателя (ТГ ник или Space_Pilot на ПК)
+            const myTgName = getTestPlayerName();
 
             fetch(`${SERVER_URL}/api/clans/create`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ logo: badge, name: name, reqLvl: req, balance: balance, creatorName: myTgName })
+                body: JSON.stringify({ 
+                    logo: badge, 
+                    name: name, 
+                    reqLvl: req, 
+                    balance: balance, 
+                    creatorName: myTgName 
+                })
             })
             .then(res => res.json())
             .then(data => {
@@ -1719,9 +1779,31 @@ window.openCustomCase = openCustomCase;
                 clansData = data.clans;
                 currentClanSubTab = 'chat';
                 executeRenderClansVisual();
+
+                // 🔥 ЖЕСТКИЙ ФИКС: Сразу после создания клана отправляем на сервер 
+                // реальный уровень собаки лидера (equippedDog), чтобы он не сбрасывался в Lvl 0!
+                fetch(`${SERVER_URL}/api/clans/join`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        clanName: name,
+                        playerName: myTgName,
+                        playerBalance: Number(balance),
+                        playerDogLvl: Number(equippedDog) // Отправляем собаку из магазина намертво
+                    })
+                })
+                .then(r => r.json())
+                .then(updatedData => {
+                    clansData = updatedData.clans;
+                    if (currentClanSubTab === 'members') {
+                        renderClanMembersList();
+                    }
+                })
+                .catch(err => console.error("Ошибка фиксации собаки лидера:", err));
             })
             .catch(err => alert("Error logging in via the server"));
         }
+
 
         function joinClan(clan) {
             playerClan = localStorage.getItem('space_dogs_player_clan') || null;
@@ -1903,30 +1985,63 @@ window.openCustomCase = openCustomCase;
 
             const currentClan = clansData.find(c => c.name === playerClan);
             
+            // Вычисляем имя текущего игрока для проверки авторства сообщений
+            let myTgName = "Space_Pilot";
+            if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+                const user = window.Telegram.WebApp.initDataUnsafe.user;
+                myTgName = user.username ? `@${user.username}` : user.first_name;
+            }
+
+            // Получаем аватарку текущего игрока (его выбранную собаку)
+            let myDogLvl = localStorage.getItem('space_dogs_equipped_dog') !== null ? Number(localStorage.getItem('space_dogs_equipped_dog')) : 0;
+            let myDogImg = `dog${myDogLvl}.png`;
+
             if (currentClan && currentClan.messages && Array.isArray(currentClan.messages)) {
                 currentClan.messages.forEach(msg => {
                     const row = document.createElement('div');
-                    row.style.cssText = "width: 100%; display: flex; margin-bottom: 4px;";
+                    row.style.cssText = "width: 100%; display: flex; margin-bottom: 8px; align-items: flex-end;";
 
                     if (msg.sender === "SYSTEM") {
                         row.style.justifyContent = "center";
                         row.innerHTML = `<div style="background: rgba(126,200,248,0.1); border: 1px dashed #3d446e; color: #a2a9d6; font-size: 11px; padding: 4px 10px; border-radius: 8px;">${msg.text}</div>`;
-                    } else if (msg.sender === GLOBAL_PLAYER_NAME) { // Четкое определение своего сообщения
+                    } else if (msg.sender === myTgName) { 
+                        // ВАШЕ СООБЩЕНИЕ (теперь с аватаркой, ником и временем справа)
                         row.style.justifyContent = "flex-end";
-                        row.innerHTML = `<div style="background: #2196F3; color: #fff; padding: 8px 12px; border-radius: 12px 12px 2px 12px; max-width: 75%; font-size: 13px; word-break: break-word;">${msg.text}</div>`;
+                        row.innerHTML = `
+                            <div style="background: #2196F3; color: #fff; padding: 8px 12px; border-radius: 12px 12px 2px 12px; max-width: 70%; word-break: break-word; text-align: left; border: 1px solid rgba(255,255,255,0.1);">
+                                <div style="font-size: 10px; color: #b3e5fc; font-weight: bold; margin-bottom: 2px; display: flex; justify-content: space-between; gap: 10px;">
+                                    <span>${msg.sender} (Вы)</span> 
+                                    <span style="color: rgba(255,255,255,0.6); font-weight: normal;">${msg.time || ""}</span>
+                                </div>
+                                <div style="font-size: 13px;">${msg.text}</div>
+                            </div>
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background-image: url('${myDogImg}'); background-size: contain; background-position: center; background-repeat: no-repeat; background-color: rgba(0,0,0,0.2); border: 1px solid #2196F3; flex-shrink: 0; margin-left: 8px;"></div>
+                        `;
                     } else {
+                        // ЧУЖОЕ СООБЩЕНИЕ (остается слева с аватаркой этого игрока)
+                        // Ищем уровень собаки этого отправителя среди участников клана, чтобы показать его реальную аватарку
+                        let senderMember = currentClan.membersList ? currentClan.membersList.find(m => m.name === msg.sender) : null;
+                        let senderDogLvl = senderMember ? (senderMember.dogLvl || 0) : 0;
+                        let senderDogImg = `dog${senderDogLvl}.png`;
+
                         row.style.justifyContent = "flex-start";
                         row.innerHTML = `
-                            <div style="background: #232742; border: 1px solid #3d446e; color: #fff; padding: 8px 12px; border-radius: 12px 12px 12px 2px; max-width: 75%; word-break: break-word;">
-                                <div style="font-size: 10px; color: #7ec8f8; font-weight: bold; margin-bottom: 2px;">${msg.sender} <span style="color: #a2a9d6; font-weight: normal; margin-left: 4px;">${msg.time}</span></div>
+                            <div style="width: 32px; height: 32px; border-radius: 50%; background-image: url('${senderDogImg}'); background-size: contain; background-position: center; background-repeat: no-repeat; background-color: rgba(0,0,0,0.2); border: 1px solid #3d446e; flex-shrink: 0; margin-right: 8px;"></div>
+                            <div style="background: #232742; border: 1px solid #3d446e; color: #fff; padding: 8px 12px; border-radius: 12px 12px 12px 2px; max-width: 70%; word-break: break-word;">
+                                <div style="font-size: 10px; color: #7ec8f8; font-weight: bold; margin-bottom: 2px; display: flex; justify-content: space-between; gap: 10px;">
+                                    <span>${msg.sender}</span> 
+                                    <span style="color: #a2a9d6; font-weight: normal;">${msg.time || ""}</span>
+                                </div>
                                 <div style="font-size: 13px;">${msg.text}</div>
-                            </div>`;
+                            </div>
+                        `;
                     }
                     box.appendChild(row);
                 });
                 box.scrollTop = box.scrollHeight;
             }
         }
+
 
         function triggerLeaveFromChat() {
             if (!playerClan) return;
@@ -2072,12 +2187,23 @@ window.openCustomCase = openCustomCase;
             }
         }
 
+        // Экспортируем все нужные функции в глобальную область window
         window.switchClanSubTab = switchClanSubTab;
         window.renderClanMembersList = renderClanMembersList;
-        if (playerClan) { setTimeout(() => { switchClanSubTab('chat'); }, 150); }
-        window.previewClanLogo = previewClanLogo; window.openClanModal = openClanModal; window.closeClanModal = closeClanModal;
-        window.createNewClan = createNewClan; window.searchClans = searchClans; window.joinClan = joinClan;
-        window.triggerLeaveFromChat = triggerLeaveFromChat; window.sendClanMessage = sendClanMessage;
+        window.renderChatMessages = renderChatMessages; // Принудительно связываем исправленную функцию
+        
+        if (playerClan) { 
+            setTimeout(() => { switchClanSubTab('chat'); }, 150); 
+        }
+        
+        window.previewClanLogo = previewClanLogo; 
+        window.openClanModal = openClanModal; 
+        window.closeClanModal = closeClanModal;
+        window.createNewClan = createNewClan; 
+        window.searchClans = searchClans; 
+        window.joinClan = joinClan;
+        window.triggerLeaveFromChat = triggerLeaveFromChat; 
+        window.sendClanMessage = sendClanMessage;
 
         setTimeout(() => { loadClansFromServer(); }, 100);
     })();
