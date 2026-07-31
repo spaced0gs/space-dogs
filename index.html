@@ -1692,13 +1692,22 @@ window.openCustomCase = openCustomCase;
 
         function loadClansFromServer() {
             fetch(`${SERVER_URL}/api/clans`)
-                .then(res => res.json())
-                .then(data => {
-                    clansData = data;
-                    executeRenderClansVisual();
+                .then(res => {
+                    if (!res.ok) {
+                        // Если сервер заблокировал автообновление чата из-за флуда, просто тихо пропускаем этот тик
+                        throw new Error("Server sync paused due to spam/mute filter");
+                    }
+                    return res.json();
                 })
-                .catch(err => console.error("Ошибка загрузки кланов:", err));
+                .then(data => {
+                    if (data && Array.isArray(data)) {
+                        clansData = data;
+                        executeRenderClansVisual();
+                    }
+                })
+                .catch(err => console.log(err.message));
         }
+
 
 
         // Таймер обновляет данные, но больше НЕ сбрасывает вкладку игрока!
@@ -2041,7 +2050,11 @@ window.openCustomCase = openCustomCase;
             if (!box || !playerClan) return;
             box.innerHTML = "";
 
+            // БРОНЯ: Если данные с сервера пустые или это не массив, останавливаем функцию
+            if (!clansData || !Array.isArray(clansData)) return;
+
             const currentClan = clansData.find(c => c.name === playerClan);
+            if (!currentClan) return; // Защита, если клан не найден
             
             const myCurrentName = getTestPlayerName();
 
