@@ -6,6 +6,29 @@
     <title>Space Dogs</title>
     <script src="https://telegram.org"></script>
     <style>
+                
+        .game-toast {
+            position: absolute;
+            top: -60px;
+            left: 5%;
+            width: 90%;
+            background: #ff5e5e;
+            color: #fff;
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255,94,94,0.4);
+            z-index: 999999;
+            transition: top 0.3s ease-in-out;
+            box-sizing: border-box;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .game-toast.show {
+            top: 20px; 
+        }
+
         body {
             background: #090a10; color: #fff; font-family: sans-serif;
             display: flex; align-items: center; justify-content: center;
@@ -301,6 +324,7 @@ button, a, input, [onclick], .earn-item, .shop-btn {
 <body>
 
     <div class="phone-container">
+        <div id="game-notification" class="game-toast">⚠️ Warning message</div>
         <div class="balance-area"><img src="coin.png" alt="coin" style="width: 32px; height: 32px; vertical-align: middle; margin-right: 5px; display: inline-block; transform: translateY(-4px);"> <span id="bal">0</span></div>
 
 
@@ -742,6 +766,19 @@ button, a, input, [onclick], .earn-item, .shop-btn {
     <script>
         (function() {
                     const SERVER_URL = "https://space-dogs-backend.vercel.app";
+                function showGameToast(message) {
+            const toast = document.getElementById('game-notification');
+            if (!toast) return;
+            toast.innerText = message;
+            toast.classList.add('show');
+            
+            // Через 3 секунды уведомление плавно уезжает обратно наверх
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+        window.showGameToast = showGameToast; // Делаем доступной везде
+
         let balance = localStorage.getItem('space_dogs_balance') ? Number(localStorage.getItem('space_dogs_balance')) : 0;
         let isHolding = false, percent = 0, timer, physicsTimer;
         let explodePoint = 100;
@@ -1968,11 +2005,10 @@ window.openCustomCase = openCustomCase;
                 })
             })
             .then(res => {
-                // Если сервер вернул ошибку флуда (429) или мата (400)
                 if (!res.ok) {
                     return res.json().then(errData => {
-                        alert(`⚠️ ${errData.error || "Slow down! Don't spam."}`);
-                        // Выбрасываем ошибку, чтобы код не шёл дальше к renderChatMessages
+                        // КЛЮЧЕВОЙ МОМЕНТ: Показываем красивую ошибку прямо внутри игры!
+                        showGameToast(`⚠️ ${errData.error || "Slow down! Don't spam."}`);
                         throw new Error(errData.error); 
                     });
                 }
@@ -1985,8 +2021,11 @@ window.openCustomCase = openCustomCase;
                     renderChatMessages();
                 }
             })
-            .catch(err => console.log("Запрос заблокирован фильтром флуда сервера"));
+            .catch(err => {
+                console.log("Request blocked by server flood/mute filter");
+            });
         }
+
 
 
 
