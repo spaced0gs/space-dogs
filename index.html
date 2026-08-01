@@ -2131,10 +2131,15 @@ window.openCustomCase = openCustomCase;
                 }
                 box.appendChild(row);
             });
+// Проверяем: если пользователь отмотал чат наверх более чем на 70 пикселей от самого низа
+const isUserReadingHistory = (box.scrollHeight - box.scrollTop - box.clientHeight) > 70;
 
-        if (!window.isChatScrollLocked) {
-            box.scrollTop = box.scrollHeight;
-    }
+// Если игрок ушел наверх читать историю — НЕ трогаем скролл!
+// Если он в самом низу — автоматически опускаем чат при получении новых сообщений
+if (!isUserReadingHistory) {
+    box.scrollTop = box.scrollHeight;
+}
+
         } 
 
 
