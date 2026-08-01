@@ -318,6 +318,14 @@ button, a, input, [onclick], .earn-item, .shop-btn {
             border: none; border-radius: 10px; font-weight: bold;
             cursor: pointer; font-size: 16px; display: none; box-shadow: 0 4px 15px rgba(33,150,243,0.4);
         }
+        #chat-messages-box {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+#chat-messages-box::-webkit-scrollbar {
+    display: none !important;
+}
+
 
     </style>
 </head>
@@ -1694,19 +1702,22 @@ window.openCustomCase = openCustomCase;
             fetch(`${SERVER_URL}/api/clans`)
                 .then(res => {
                     if (!res.ok) {
-                        // Если сервер заблокировал автообновление чата из-за флуда, просто тихо пропускаем этот тик
-                        throw new Error("Server sync paused due to spam/mute filter");
+                        throw new Error("Sync paused: server returns flood status");
                     }
                     return res.json();
                 })
                 .then(data => {
+                    // Строгая проверка: обновляем данные только если прилетел корректный массив
                     if (data && Array.isArray(data)) {
                         clansData = data;
                         executeRenderClansVisual();
                     }
                 })
-                .catch(err => console.log(err.message));
+                .catch(err => {
+                    console.log("Фоновое обновление пропущено, чтобы не сломать чат:", err.message);
+                });
         }
+
 
 
 
@@ -1725,7 +1736,14 @@ window.openCustomCase = openCustomCase;
             const browserView = document.getElementById('clan-browser-view');
             const chatView = document.getElementById('clan-chat-view');
             const container = document.getElementById('clans-list-container');
+            
             if (!container || !browserView || !chatView) return;
+
+            // Защитная проверка глобального массива перед рендерингом
+            if (!clansData || !Array.isArray(clansData)) {
+                console.log("Предотвращено падение интерфейса: clansData пуст.");
+                return;
+            }
 
             playerClan = localStorage.getItem('space_dogs_player_clan') || null;
 
@@ -1737,7 +1755,6 @@ window.openCustomCase = openCustomCase;
                     if (document.getElementById('chat-clan-name')) document.getElementById('chat-clan-name').innerText = playerClan;
                     if (document.getElementById('chat-clan-logo')) document.getElementById('chat-clan-logo').innerText = currentClan.logo;
                     
-                    // Обновляем текущую активную под-вкладку без изменения видимости окон
                     if (currentClanSubTab === 'chat') {
                         renderChatMessages();
                     } else if (currentClanSubTab === 'members') {
@@ -1782,6 +1799,7 @@ window.openCustomCase = openCustomCase;
                 document.getElementById(`join-btn-${index}`).onclick = () => joinClan(clan);
             });
         }
+
 
         function createNewClan() {
             playerClan = localStorage.getItem('space_dogs_player_clan') || null;
@@ -2048,89 +2066,78 @@ window.openCustomCase = openCustomCase;
         function renderChatMessages() {
             const box = document.getElementById('chat-messages-box');
             if (!box || !playerClan) return;
-            box.innerHTML = "";
 
-            // БРОНЯ: Если данные с сервера пустые или это не массив, останавливаем функцию
+            // Жесткая броня: если массив некорректен, вообще не трогаем чат и ничего не стираем!
             if (!clansData || !Array.isArray(clansData)) return;
 
             const currentClan = clansData.find(c => c.name === playerClan);
-            if (!currentClan) return; // Защита, если клан не найден
+            if (!currentClan || !currentClan.messages) return;
+
+            box.innerHTML = ""; // Очищаем чат только после того, как убедились, что данные верны!
             
             const myCurrentName = getTestPlayerName();
-
             let myDogLvl = localStorage.getItem('space_dogs_equipped_dog') !== null ? Number(localStorage.getItem('space_dogs_equipped_dog')) : 0;
             let myDogImg = `dog${myDogLvl}.png`;
 
-            if (currentClan && currentClan.messages && Array.isArray(currentClan.messages)) {
-                currentClan.messages.forEach(msg => {
-                    const row = document.createElement('div');
-                    row.style.cssText = "width: 100% !important; display: flex !important; margin-bottom: 20px !important; box-sizing: border-box !important;";
+            currentClan.messages.forEach(msg => {
+                const row = document.createElement('div');
+                row.style.cssText = "width: 100% !important; display: flex !important; margin-bottom: 25px !important; box-sizing: border-box !important; position: relative !important;";
 
-                    let displayTime = msg.time || new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                let displayTime = msg.time || new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
 
-                    if (msg.sender === "SYSTEM") {
-                        row.style.justifyContent = "center";
-                        row.innerHTML = `<div style="background: rgba(126,200,248,0.1); border: 1px dashed #3d446e; color: #a2a9d6; font-size: 11px; padding: 4px 10px; border-radius: 8px;">${msg.text}</div>`;
-                    } else if (msg.sender === myCurrentName || msg.sender === "Space_Pilot" || msg.sender.includes("Guest_Pilot")) { 
-                        // НАШЕ СООБЩЕНИЕ (Справа)
-                        row.style.setProperty('justify-content', 'flex-end', 'important');
-                        row.innerHTML = `
-                            <div style="position: relative !important; max-width: 70% !important; margin-right: 40px !important; display: block !important;">
-                                <!-- Круг собака снаружи сверху справа -->
-                                <div style="position: absolute !important; top: -10px !important; right: -40px !important; width: 32px !important; height: 32px !important; border-radius: 50% !important; background-image: url('${myDogImg}') !important; background-size: contain !important; background-position: center !important; background-repeat: no-repeat !important; background-color: rgba(255,255,255,0.1) !important; border: 1px solid #2196F3 !important; z-index: 10 !important;"></div>
-                                
-                                <!-- Бабл сообщения -->
-                                <div style="background: #2196F3 !important; color: #fff !important; padding: 10px 14px 12px 14px !important; border-radius: 16px 2px 16px 16px !important; border: 1px solid rgba(255,255,255,0.1) !important; text-align: left !important; box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;">
-                                    <!-- Ник сверху внутри бабла -->
-                                    <div style="font-size: 11px !important; color: #b3e5fc !important; font-weight: bold !important; margin-bottom: 4px !important; border-bottom: 1px solid rgba(255,255,255,0.15) !important; padding-bottom: 2px !important;">
-                                        ${msg.sender} (Вы)
-                                    </div>
-                                    <!-- Текст сообщения -->
-                                    <div style="font-size: 14px !important; line-height: 1.4 !important; color: #fff !important; margin-bottom: 4px !important;">
-                                        ${msg.text}
-                                    </div>
-                                    <!-- Время снизу справа внутри бабла -->
-                                    <div style="font-size: 10px !important; color: rgba(255,255,255,0.65) !important; text-align: right !important; font-weight: normal !important; margin-top: 2px !important;">
-                                        ${displayTime}
-                                    </div>
+                if (msg.sender === "SYSTEM") {
+                    row.style.justifyContent = "center";
+                    row.innerHTML = `<div style="background: rgba(126,200,248,0.1); border: 1px dashed #3d446e; color: #a2a9d6; font-size: 11px; padding: 4px 10px; border-radius: 8px;">${msg.text}</div>`;
+                } else if (msg.sender === myCurrentName || msg.sender === "Space_Pilot" || msg.sender.includes("Guest_Pilot")) { 
+                    row.style.setProperty('justify-content', 'flex-end', 'important');
+                    row.innerHTML = `
+                        <div style="position: relative !important; max-width: 70% !important; margin-right: 42px !important; display: block !important;">
+                            <div style="position: absolute !important; top: -12px !important; right: -42px !important; width: 34px !important; height: 34px !important; border-radius: 50% !important; background-image: url('${myDogImg}') !important; background-size: contain !important; background-position: center !important; background-repeat: no-repeat !important; background-color: rgba(255,255,255,0.1) !important; border: 2px solid #2196F3 !important; z-index: 10 !important;"></div>
+                            <div style="background: #2196F3 !important; color: #fff !important; padding: 10px 14px 10px 14px !important; border-radius: 16px 2px 16px 16px !important; border: 1px solid rgba(255,255,255,0.1) !important; text-align: left !important; box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important; display: flex !important; flex-direction: column !important;">
+                                <div style="font-size: 11px !important; color: #b3e5fc !important; font-weight: bold !important; margin-bottom: 4px !important; width: 100% !important; white-space: nowrap !important; overflow: hidden; text-overflow: ellipsis !important;">
+                                    ${msg.sender} (Вы)
+                                </div>
+                                <div style="font-size: 14px !important; line-height: 1.4 !important; color: #fff !important; word-break: break-word !important; margin-bottom: 2px !important;">
+                                    ${msg.text}
+                                </div>
+                                <div style="font-size: 10px !important; color: rgba(255,255,255,0.65) !important; text-align: right !important; font-weight: normal !important; margin-top: 4px !important; width: 100% !important;">
+                                    ${displayTime}
                                 </div>
                             </div>
-                        `;
-                    } else {
-                        // ЧУЖОЕ СООБЩЕНИЕ (Слева)
-                        let senderMember = currentClan.membersList ? currentClan.membersList.find(m => m.name === msg.sender) : null;
-                        let senderDogLvl = senderMember ? (senderMember.dogLvl || 0) : 0;
-                        let senderDogImg = `dog${senderDogLvl}.png`;
+                        </div>
+                    `;
+                } else {
+                    let senderMember = currentClan.membersList ? currentClan.membersList.find(m => m.name === msg.sender) : null;
+                    let senderDogLvl = senderMember ? (senderMember.dogLvl || 0) : 0;
+                    let senderDogImg = `dog${senderDogLvl}.png`;
 
-                        row.style.setProperty('justify-content', 'flex-start', 'important');
-                        row.innerHTML = `
-                            <div style="position: relative !important; max-width: 70% !important; margin-left: 40px !important; display: block !important;">
-                                <!-- Круг собака снаружи сверху слева -->
-                                <div style="position: absolute !important; top: -10px !important; left: -40px !important; width: 32px !important; height: 32px !important; border-radius: 50% !important; background-image: url('${senderDogImg}') !important; background-size: contain !important; background-position: center !important; background-repeat: no-repeat !important; background-color: rgba(255,255,255,0.1) !important; border: 1px solid #3d446e !important; z-index: 10 !important;"></div>
-                                
-                                <!-- Бабл сообщения -->
-                                <div style="background: #232742 !important; color: #fff !important; padding: 10px 14px 12px 14px !important; border-radius: 2px 16px 16px 16px !important; border: 1px solid #3d446e !important; text-align: left !important; box-shadow: 0 2px 5px rgba(0,0,0,0.2) !important;">
-                                    <!-- Ник сверху внутри бабла -->
-                                    <div style="font-size: 11px !important; color: #7ec8f8 !important; font-weight: bold !important; margin-bottom: 4px !important; border-bottom: 1px solid rgba(255,255,255,0.05) !important; padding-bottom: 2px !important;">
-                                        ${msg.sender}
-                                    </div>
-                                    <!-- Текст сообщения -->
-                                    <div style="font-size: 14px !important; line-height: 1.4 !important; color: #fff !important; margin-bottom: 4px !important;">
-                                        ${msg.text}
-                                    </div>
-                                    <!-- Время снизу справа внутри бабла -->
-                                    <div style="font-size: 10px !important; color: #a2a9d6 !important; text-align: right !important; font-weight: normal !important; margin-top: 2px !important;">
-                                        ${displayTime}
-                                    </div>
+                    row.style.setProperty('justify-content', 'flex-start', 'important');
+                    row.innerHTML = `
+                        <div style="position: relative !important; max-width: 70% !important; margin-left: 42px !important; display: block !important;">
+                            <div style="position: absolute !important; top: -12px !important; left: -42px !important; width: 34px !important; height: 34px !important; border-radius: 50% !important; background-image: url('${senderDogImg}') !important; background-size: contain !important; background-position: center !important; background-repeat: no-repeat !important; background-color: rgba(255,255,255,0.1) !important; border: 1px solid #3d446e !important; z-index: 10 !important;"></div>
+                            <div style="background: #232742 !important; color: #fff !important; padding: 10px 14px 10px 14px !important; border-radius: 2px 16px 16px 16px !important; border: 1px solid #3d446e !important; text-align: left !important; box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important; display: flex !important; flex-direction: column !important;">
+                                <div style="font-size: 11px !important; color: #7ec8f8 !important; font-weight: bold !important; margin-bottom: 4px !important; width: 100% !important; white-space: nowrap !important; overflow: hidden; text-overflow: ellipsis !important;">
+                                    ${msg.sender}
+                                </div>
+                                <div style="font-size: 14px !important; line-height: 1.4 !important; color: #fff !important; word-break: break-word !important; margin-bottom: 2px !important;">
+                                    ${msg.text}
+                                </div>
+                                <div style="font-size: 10px !important; color: #a2a9d6 !important; text-align: right !important; font-weight: normal !important; margin-top: 4px !important; width: 100% !important;">
+                                    ${displayTime}
                                 </div>
                             </div>
-                        `;
-                    }
-                    box.appendChild(row);
-                });
-                box.scrollTop = box.scrollHeight;
-            }
-        }
+                        </div>
+                    `;
+                }
+                box.appendChild(row);
+            });
+
+        if (!window.isChatScrollLocked) {
+            box.scrollTop = box.scrollHeight;
+    }
+        } 
+
+
 
 
 
@@ -2190,14 +2197,36 @@ window.openCustomCase = openCustomCase;
                     time: timeStr
                 })
             })
-            .then(res => res.json())
-            .then(data => {
-                input.value = ""; 
-                clansData = data.clans;
-                renderChatMessages();
+            .then(res => {
+                // Если сервер вернул ошибку спама (429) или мута (423)
+                if (!res.ok) {
+                    return res.json().then(errData => {
+                        // Выводим ошибку на экран в наше новое уведомление
+                        if (typeof showGameToast === 'function') {
+                            showGameToast(`⚠️ ${errData.error || "Slow down! Don't spam."}`);
+                        } else {
+                            alert(`⚠️ ${errData.error || "Slow down! Don't spam."}`);
+                        }
+                        // Жестко обрываем выполнение, чтобы код не пошел к обработке массивов кланов!
+                        throw new Error("Blocked by server flood filter");
+                    });
+                }
+                return res.json();
             })
-            .catch(err => console.error("Ошибка отправки сообщения:", err));
+            .then(data => {
+                // Проверяем, что сервер прислал корректный массив кланов
+                if (data && data.clans && Array.isArray(data.clans)) {
+                    input.value = ""; 
+                    clansData = data.clans;
+                    renderChatMessages();
+                }
+            })
+            .catch(err => {
+                // Просто логируем, что запрос заблокирован, предотвращая падение JavaScript
+                console.log("Отправка заблокирована:", err.message);
+            });
         }
+
 
         function renderChatMessages() {
             const box = document.getElementById('chat-messages-box');
@@ -2329,6 +2358,19 @@ window.openCustomCase = openCustomCase;
         window.switchClanSubTab = switchClanSubTab;
         window.renderClanMembersList = renderClanMembersList;
         window.renderChatMessages = renderChatMessages; // Принудительно связываем исправленную функцию
+        window.isChatScrollLocked = false;
+
+        document.addEventListener('scroll', function(e) {
+    const box = document.getElementById('chat-messages-box');
+    if (!box) return;
+    
+    if (box.scrollHeight - box.scrollTop - box.clientHeight > 70) {
+        window.isChatScrollLocked = true;
+    } else {
+        window.isChatScrollLocked = false;
+    }
+}, true);
+
         
         if (playerClan) { 
             setTimeout(() => { switchClanSubTab('chat'); }, 150); 
