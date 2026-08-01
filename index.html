@@ -328,23 +328,24 @@ button, a, input, [onclick], .earn-item, .shop-btn {
     display: none !important;
 }
 #clan-chat-view {
-    /* Растягиваем контейнер чата на всю доступную высоту экрана до кнопок */
-    height: calc(100vh - 54px) !important; 
+    height: calc(100vh - 100px) !important; 
+    display: none;
+    flex-direction: column !important;
+    position: relative !important;
+    box-sizing: border-box !important;
     margin-top: -65px;
     text-align: left;
-    box-sizing: border-box;
-    display: none;
-    flex-direction: column;
-    
-    /* Добавляем внутренний отступ снизу, чтобы поле ввода не налезало на кнопки меню */
-    padding-bottom: 25px !important; 
 }
+
 #chat-messages-box {
-    flex: 1 !important;
+    width: 100% !important;
+    height: calc(100vh - 280px) !important; /* Намертво фиксируем высоту коробки сообщений по аналогии с магазином */
     overflow-y: auto !important;
     overflow-x: hidden !important;
-    margin-bottom: 8px !important;
+    box-sizing: border-box !important;
+    margin-bottom: 0px !important; /* Убираем нижний отступ, который создавал щель */
 }
+
     #chat-messages-box {
         flex: 1 !important;
         overflow-y: auto !important;
@@ -1689,6 +1690,7 @@ updateShopUI();
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
+        tg.disableVerticalSwipes();
         tg.setHeaderColor('#090a10');
         tg.setBackgroundColor('#090a10');
     }
