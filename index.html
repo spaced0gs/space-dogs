@@ -48,6 +48,8 @@
     overflow: hidden;
     border-radius: 0; 
     box-shadow: none;
+
+    overscroll-behavior: none !important;
 }
 
 button, a, input, [onclick], .earn-item, .shop-btn {
@@ -325,6 +327,45 @@ button, a, input, [onclick], .earn-item, .shop-btn {
 #chat-messages-box::-webkit-scrollbar {
     display: none !important;
 }
+#clan-chat-view {
+    /* Растягиваем контейнер чата на всю доступную высоту экрана до кнопок */
+    height: calc(100vh - 54px) !important; 
+    margin-top: -65px;
+    text-align: left;
+    box-sizing: border-box;
+    display: none;
+    flex-direction: column;
+    
+    /* Добавляем внутренний отступ снизу, чтобы поле ввода не налезало на кнопки меню */
+    padding-bottom: 25px !important; 
+}
+#chat-messages-box {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    margin-bottom: 8px !important;
+}
+    #chat-messages-box {
+        flex: 1 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        margin-bottom: 8px !important;
+    }
+
+    /* Намертво блокируем резиновый скролл страницы */
+    #screen-clans, #clan-chat-view, .controls-area {
+        touch-action: none !important;
+    }
+
+    #chat-messages-box {
+        touch-action: pan-y !important;
+        position: relative !important;
+    }
+
+    #clan-subview-members {
+        touch-action: pan-y !important;
+        overflow-y: auto !important;
+    }
 
 
     </style>
@@ -792,9 +833,36 @@ button, a, input, [onclick], .earn-item, .shop-btn {
         let explodePoint = 100;
         let rocketBottom = 15;
         let inSpace = false;
-        let environmentProgress = 0;
-        let currentSpeed = 0.5;
-        function getNextSundayResetTime() {
+let environmentProgress = 0;
+let currentSpeed = 0.5;
+window.lastMessagesCount = 0;
+
+// НАМЕРТВО БЛОКИРУЕМ РЕЗИНОВЫЙ ОТСКОК ЭКРАНА В ЧАТЕ КЛАНА
+let touchStartChatY = 0;
+
+document.addEventListener('touchstart', function(e) {
+    touchStartChatY = e.touches.clientY;
+}, { passive: true });
+
+document.addEventListener('touchmove', function(e) {
+    const box = document.getElementById('chat-messages-box');
+    if (!box) return;
+
+    if (e.target.closest('#chat-messages-box')) {
+        const isAtTop = box.scrollTop <= 0;
+        const isAtBottom = (box.scrollHeight - box.scrollTop - box.clientHeight) <= 1;
+        const touchMoveY = e.touches.clientY;
+
+        if ((isAtTop && touchMoveY > touchStartChatY) || (isAtBottom && touchMoveY < touchStartChatY)) {
+            e.preventDefault(); 
+        }
+    } else if (e.target.closest('#clan-chat-view')) {
+        e.preventDefault();
+    }
+}, { passive: false });
+
+function getNextSundayResetTime() {
+
             let now = new Date();
             let resultDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             let currentDay = now.getDay() === 0 ? 7 : now.getDay();
@@ -1721,12 +1789,23 @@ window.openCustomCase = openCustomCase;
 
 
 
-        // Таймер обновляет данные, но больше НЕ сбрасывает вкладку игрока!
-        setInterval(() => {
-            if (playerClan) {
-                loadClansFromServer();
+// Умный таймер: запрашивает сервер, ТОЛЬКО если игрок не читает историю вверху
+setInterval(() => {
+    if (playerClan) {
+        const box = document.getElementById('chat-messages-box');
+        if (box) {
+            // Считаем расстояние от текущего скролла до самого низа чата
+            const distanceFromBottom = box.scrollHeight - box.scrollTop - box.clientHeight;
+            
+            // Если игрок отмотал чат наверх (более 60px от низа) — ЖЕСТКО блокируем запрос к серверу!
+            if (distanceFromBottom > 60) {
+                return; // Сервер вообще не опрашивается, чат застывает на месте, пока ты читаешь
             }
-        }, 2000);
+        }
+        loadClansFromServer();
+    }
+}, 2000);
+
 
         function renderClans(filterText = "") {
             loadClansFromServer();
@@ -1755,11 +1834,22 @@ window.openCustomCase = openCustomCase;
                     if (document.getElementById('chat-clan-name')) document.getElementById('chat-clan-name').innerText = playerClan;
                     if (document.getElementById('chat-clan-logo')) document.getElementById('chat-clan-logo').innerText = currentClan.logo;
                     
-                    if (currentClanSubTab === 'chat') {
-                        renderChatMessages();
-                    } else if (currentClanSubTab === 'members') {
-                        renderClanMembersList();
-                    }
+if (currentClanSubTab === 'chat') {
+    const box = document.getElementById('chat-messages-box');
+    if (box) {
+        const distanceFromBottom = box.scrollHeight - box.scrollTop - box.clientHeight;
+        if (distanceFromBottom > 60) {
+            // Ничего не делаем, чат не перезаписывается
+        } else {
+            renderChatMessages();
+        }
+    } else {
+        renderChatMessages();
+    }
+} else if (currentClanSubTab === 'members') {
+    renderClanMembersList();
+}
+
                     return;
                 } else {
                     playerClan = null;
@@ -2131,14 +2221,17 @@ window.openCustomCase = openCustomCase;
                 }
                 box.appendChild(row);
             });
-// Проверяем: если пользователь отмотал чат наверх более чем на 70 пикселей от самого низа
-const isUserReadingHistory = (box.scrollHeight - box.scrollTop - box.clientHeight) > 70;
+// --- УМНАЯ СИСТЕМА УДЕРЖАНИЯ СКРОЛЛА ---
+// Вычисляем расстояние от текущего положения скролла до самого низа чата
+const distanceFromBottom = box.scrollHeight - box.scrollTop - box.clientHeight;
 
-// Если игрок ушел наверх читать историю — НЕ трогаем скролл!
-// Если он в самом низу — автоматически опускаем чат при получении новых сообщений
-if (!isUserReadingHistory) {
-    box.scrollTop = box.scrollHeight;
+// Если пользователь отмотал чат наверх более чем на 40 пикселей (ушел со дна чата)
+if (distanceFromBottom > 40) {
+    // Мы ВООБЩЕ НЕ ТРОГАЕМ СКРОЛЛ. Пусть остается там, где его оставил игрок!
+    box.scrollTop = box.scrollTop; 
+} else {
 }
+
 
         } 
 
