@@ -8,26 +8,45 @@
     <style>
                 
         .game-toast {
-            position: absolute;
-            top: -60px;
+            position: fixed;
+            top: -100px;
             left: 5%;
             width: 90%;
-            background: #ff5e5e;
+            background: rgba(20, 23, 41, 0.95) !important; 
             color: #fff;
-            padding: 12px;
-            border-radius: 12px;
+            padding: 10px 14px; /* Уменьшили внутренние отступы */
+            border-radius: 12px; /* Чуть аккуратнее скруглили */
             text-align: center;
-            font-size: 13px;
+            font-size: 12.5px; /* Уменьшили шрифт, чтобы текст точно влезал в один слой */
             font-weight: bold;
-            box-shadow: 0 4px 15px rgba(255,94,94,0.4);
-            z-index: 999999;
-            transition: top 0.3s ease-in-out;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 9999999;
             box-sizing: border-box;
-            border: 1px solid rgba(255,255,255,0.2);
+            letter-spacing: 0.3px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(126, 200, 248, 0.5) !important;
+            box-shadow: 0 8px 32px rgba(126, 200, 248, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.1) !important;
+            
+            /* Жесткая броня от переносов на мобилках */
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
+
+        /* ЭТОТ КЛАСС СДЕЛАЕТ ПЛАШКУ ПОЛНОСТЬЮ КРАСНОЙ ПРИ ФЛУДЕ, МУТЕ И ССЫЛКАХ */
+        .game-toast.error-type {
+            background: #ff5e5e !important; /* Насыщенный красный цвет фона */
+            border: 1px solid #ff2a2a !important; /* Яркая красная рамка */
+            box-shadow: 0 8px 25px rgba(255, 94, 94, 0.5) !important; /* Плотное красное свечение */
+            color: #ffffff !important; /* Белый цвет текста */
+        }
+        
         .game-toast.show {
-            top: 20px; 
+            top: 25px; 
         }
+
+
 
         body {
             background: #090a10; color: #fff; font-family: sans-serif;
@@ -193,6 +212,14 @@ button, a, input, [onclick], .earn-item, .shop-btn {
         .btn-hold:active { 
             background: #ff0000; border-color: #fff; color: #ffffff; box-shadow: 0 0 25px #ff0000; transform: scale(0.96);
         }
+                .btn-hold.is-pressed { 
+            background: #ff0000 !important; 
+            border-color: #fff !important; 
+            color: #ffffff !important; 
+            box-shadow: 0 0 25px #ff0000 !important; 
+            transform: scale(0.96);
+        }
+
         .shaking-rocket { animation: shakeRocket 0.04s infinite alternate ease-in-out; }
         @keyframes shakeRocket { 
             0% { transform: translate(0.7px, 0.5px) rotate(0.2deg); } 
@@ -328,45 +355,51 @@ button, a, input, [onclick], .earn-item, .shop-btn {
     display: none !important;
 }
 #clan-chat-view {
-    height: calc(100vh - 100px) !important; 
+    height: calc(100vh - 155px) !important; 
     display: none;
     flex-direction: column !important;
+    justify-content: space-between !important;
     position: relative !important;
     box-sizing: border-box !important;
     margin-top: -65px;
     text-align: left;
+    padding-bottom: 5px !important;
 }
 
 #chat-messages-box {
     width: 100% !important;
-    height: calc(100vh - 280px) !important; /* Намертво фиксируем высоту коробки сообщений по аналогии с магазином */
+    height: calc(100vh - 280px) !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     box-sizing: border-box !important;
-    margin-bottom: 0px !important; /* Убираем нижний отступ, который создавал щель */
+    margin-bottom: 0px !important;
+}
+#screen-clans, 
+#clan-chat-view,
+#clan-browser-view {
+    touch-action: none !important;
+    overscroll-behavior: none !important;
 }
 
-    #chat-messages-box {
-        flex: 1 !important;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        margin-bottom: 8px !important;
-    }
+#chat-messages-box,
+#clan-subview-members {
+    touch-action: pan-y !important;
+}
+/* Насильно опускаем панель ввода вниз до упора, закрывая черную щель */
+#clan-subview-chat > div:last-child {
+    margin-bottom: -67px !important; /* Выталкивает инпут вниз за пределы рамки */
+    position: relative !important;
+    z-index: 10 !important;
+}
+/* Насильно опускаем нижнюю границу вкладок MEMBERS и EVENTS до самого меню */
+#clan-subview-members, #clan-subview-events {
+    padding-bottom: 50px !important; /* Добавляет внутреннюю высоту */
+    margin-bottom: -50px !important; /* Вытягивает блок вниз, закрывая черную щель */
+    position: relative !important;
+    z-index: 5 !important;
+}
 
-    /* Намертво блокируем резиновый скролл страницы */
-    #screen-clans, #clan-chat-view, .controls-area {
-        touch-action: none !important;
-    }
 
-    #chat-messages-box {
-        touch-action: pan-y !important;
-        position: relative !important;
-    }
-
-    #clan-subview-members {
-        touch-action: pan-y !important;
-        overflow-y: auto !important;
-    }
 
 
     </style>
@@ -431,177 +464,210 @@ button, a, input, [onclick], .earn-item, .shop-btn {
             <p style="margin: 0; font-size: 11px; color: #a2a9d6; line-height: 1.5; padding-right: 25px; box-sizing: border-box;">Chances:<br>Lvl1(20%), Lvl2(16%), Lvl3(14%), Lvl4(12%), Lvl5(10%), Lvl6(9%), Lvl7(7%), Lvl8(5%), Lvl9(4%), Lvl10(3%)</p>
         </div>
     </div>
-    <button class="shop-btn buy" id="btn-open-dog-case" style="padding: 10px 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 100px;" onclick="openCustomCase('dog', 500000)">
+    <button class="shop-btn buy" id="btn-open-dog-case" style="padding: 10px 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 100px;" onclick="openCustomCase('dog', 250)">
         OPEN<br>
-        <span style="font-size: 10px; display: inline-block; margin-left: 6px;">500⭐</span><br>
+        <span style="font-size: 10px; display: inline-block; margin-left: 6px;">250⭐</span><br>
         <span id="dog-case-limit-txt" style="font-size: 10px; font-weight: normal; color: rgba(255,255,255,0.75);">0/5</span>
     </button>
 </div>
 
-
-<!-- Case 2: Rocket Case -->
-<div class="shop-list-item" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between;">
-    <div class="shop-item-info" style="display: flex; align-items: center; gap: 15px;">
-        <img src="rocket_case.png" alt="Rocket Case" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
-        <div>
-            <h4 style="margin: 0 0 5px 0; color: #fff;">Rocket Case</h4>
-            <p style="margin: 0; font-size: 11px; color: #a2a9d6; line-height: 1.4;">Chances: Lvl1(45%), Lvl2(25%), Lvl3(15%), Lvl4(12%), Lvl5(3%)</p>
+    <!-- Case 2: Rocket Case -->
+    <div class="shop-list-item" style="background: #232742; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; height: 100px; box-sizing: border-box;">
+        <div class="shop-item-info" style="display: flex; align-items: center; gap: 15px;">
+            <img src="rocket_case.png" alt="Rocket Case" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+            <div>
+                <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Rocket Case</h4>
+                <p style="margin: 0; font-size: 11px; color: #a2a9d6; line-height: 1.4;">Chances: Lvl1(45%), Lvl2(25%), Lvl3(15%), Lvl4(12%), Lvl5(3%)</p>
+            </div>
         </div>
+        <button class="shop-btn buy" id="btn-open-rocket-case" style="padding: 10px 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 100px;" onclick="openCustomCase('rocket', 500)">
+            OPEN<br>
+            <span style="font-size: 10px; display: inline-block; margin-left: 6px;">500⭐</span><br>
+            <span id="rocket-case-limit-txt" style="font-size: 10px; font-weight: normal; color: rgba(255,255,255,0.75);">0/5</span>
+        </button>
     </div>
-    <button class="shop-btn buy" id="btn-open-rocket-case" style="padding: 10px 15px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 100px;" onclick="openCustomCase('rocket', 1000000)">
-        OPEN<br>
-        <span style="font-size: 10px; display: inline-block; margin-left: 6px;">1000⭐</span><br>
-        <span id="rocket-case-limit-txt" style="font-size: 10px; font-weight: normal; color: rgba(255,255,255,0.75);">0/5</span>
-    </button>
-</div>
-
 
 </div>
+
 
 
 
             
-                        <div id="shop-dogs-container" style="height: calc(100vh - 50px); overflow-y: auto; padding-bottom: 150px; box-sizing: border-box;">
-                <div class="dog-card" id="dog-card-0" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px;">
-                    <img src="dog0.png" alt="dog0" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Rookie (Lvl 0)</h4>
-                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 5%</p>
-                    </div>
-                    <button id="dog-btn-0" style="background: #2196F3; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">USED</button>
-                </div>
-                <div class="dog-card" id="dog-card-1" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px;">
-                    <img src="dog1.png" alt="dog1" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Max (Lvl 1)</h4>
-                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 10%</p>
-                    </div>
-                    <button onclick="buySpecificDog(1)" id="dog-btn-1" style="background: #7ec8f8; color: #000; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">BUY<br>20000 <img src="coin.png" style="width:14px; height:14px; vertical-align:middle; margin-left:2px; transform:translateY(-1px);"></button>
-                </div>
-                <div class="dog-card" id="dog-card-2" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
-                    <img src="dog2.png" alt="dog2" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Buddy (Lvl 2)</h4>
-                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 20%</p>
-                    </div>
-                    <button onclick="buySpecificDog(2)" id="dog-btn-2" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
-                </div>
-                <div class="dog-card" id="dog-card-3" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
-                    <img src="dog3.png" alt="dog3" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Rocky (Lvl 3)</h4>
-                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 30%</p>
-                    </div>
-                    <button onclick="buySpecificDog(3)" id="dog-btn-3" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
-                </div>
-                <div class="dog-card" id="dog-card-4" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
-                    <img src="dog4.png" alt="dog4" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Bailey (Lvl 4)</h4>
-                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 40%</p>
-                    </div>
-                    <button onclick="buySpecificDog(4)" id="dog-btn-4" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
-                </div>
-                <div class="dog-card" id="dog-card-5" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
-                    <img src="dog5.png" alt="dog5" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Buster (Lvl 5)</h4>
-                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 50%</p>
-                    </div>
-                    <button onclick="buySpecificDog(5)" id="dog-btn-5" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
-                </div>
-                <div class="dog-card" id="dog-card-6" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
-                    <img src="dog6.png" alt="dog6" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Toby (Lvl 6)</h4>
-                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 60%</p>
-                    </div>
-                    <button onclick="buySpecificDog(6)" id="dog-btn-6" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
-                </div>
-                <div class="dog-card" id="dog-card-7" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
-                    <img src="dog7.png" alt="dog7" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Duke (Lvl 7)</h4>
-                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 70%</p>
-                    </div>
-                    <button onclick="buySpecificDog(7)" id="dog-btn-7" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
-                </div>
-                <div class="dog-card" id="dog-card-8" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
-                    <img src="dog8.png" alt="dog8" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Cody (Lvl 8)</h4>
-                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 80%</p>
-                    </div>
-                    <button onclick="buySpecificDog(8)" id="dog-btn-8" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
-                </div>
-                <div class="dog-card" id="dog-card-9" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
-                    <img src="dog9.png" alt="dog9" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog Rex (Lvl 9)</h4>
-                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 90%</p>
-                    </div>
-                    <button onclick="buySpecificDog(9)" id="dog-btn-9" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
-                </div>
-                                <div class="dog-card" id="dog-card-10" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
-                    <img src="dog10.png" alt="dog10" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 5px 0; color: #fff;">Dog June (Lvl 10)</h4>
-                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 100%</p>
-                    </div>
-                    <button onclick="buySpecificDog(10)" id="dog-btn-10" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
-                </div>
+<div id="shop-dogs-container" style="height: calc(100vh - 50px); overflow-y: auto; padding-bottom: 150px; box-sizing: border-box;">
+    <!-- Dog 0 -->
+    <div class="dog-card" id="dog-card-0" style="background: #232742; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; height: 85px; box-sizing: border-box;">
+        <img src="dog0.png" alt="dog0" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Dog Rookie (Lvl 0)</h4>
+            <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 5%</p>
+        </div>
+        <button id="dog-btn-0" style="background: #2196F3; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">USED</button>
+    </div>
+
+    <!-- Dog 1 -->
+    <div class="dog-card" id="dog-card-1" style="background: #232742; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; height: 85px; box-sizing: border-box;">
+        <img src="dog1.png" alt="dog1" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Dog Max (Lvl 1)</h4>
+            <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 10%</p>
+        </div>
+        <button onclick="buySpecificDog(1)" id="dog-btn-1" style="background: #7ec8f8; color: #000; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">BUY<br>40000 <img src="coin.png" style="width:14px; height:14px; vertical-align:middle; margin-left:2px; transform:translateY(-1px);"></button>
+    </div>
+
+    <!-- Dog 2 -->
+    <div class="dog-card" id="dog-card-2" style="background: #232742; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; height: 85px; box-sizing: border-box; opacity: 0.5;">
+        <img src="dog2.png" alt="dog2" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Dog Buddy (Lvl 2)</h4>
+            <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 20%</p>
+        </div>
+        <button onclick="buySpecificDog(2)" id="dog-btn-2" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+    </div>
+
+    <!-- Dog 3 -->
+    <div class="dog-card" id="dog-card-3" style="background: #232742; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; height: 85px; box-sizing: border-box; opacity: 0.5;">
+        <img src="dog3.png" alt="dog3" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Dog Rocky (Lvl 3)</h4>
+            <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 30%</p>
+        </div>
+        <button onclick="buySpecificDog(3)" id="dog-btn-3" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+    </div>
+
+    <!-- Dog 4 -->
+    <div class="dog-card" id="dog-card-4" style="background: #232742; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; height: 85px; box-sizing: border-box; opacity: 0.5;">
+        <img src="dog4.png" alt="dog4" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Dog Bailey (Lvl 4)</h4>
+            <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 40%</p>
+        </div>
+        <button onclick="buySpecificDog(4)" id="dog-btn-4" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+    </div>
+
+    <!-- Dog 5 -->
+    <div class="dog-card" id="dog-card-5" style="background: #232742; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; height: 85px; box-sizing: border-box; opacity: 0.5;">
+        <img src="dog5.png" alt="dog5" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Dog Buster (Lvl 5)</h4>
+            <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 50%</p>
+        </div>
+        <button onclick="buySpecificDog(5)" id="dog-btn-5" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+    </div>
+
+    <!-- Dog 6 -->
+    <div class="dog-card" id="dog-card-6" style="background: #232742; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; height: 85px; box-sizing: border-box; opacity: 0.5;">
+        <img src="dog6.png" alt="dog6" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Dog Toby (Lvl 6)</h4>
+            <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 60%</p>
+        </div>
+        <button onclick="buySpecificDog(6)" id="dog-btn-6" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+    </div>
+
+    <!-- Dog 7 -->
+    <div class="dog-card" id="dog-card-7" style="background: #232742; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; height: 85px; box-sizing: border-box; opacity: 0.5;">
+        <img src="dog7.png" alt="dog7" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Dog Duke (Lvl 7)</h4>
+            <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 70%</p>
+        </div>
+        <button onclick="buySpecificDog(7)" id="dog-btn-7" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+    </div>
+
+    <!-- Dog 8 -->
+    <div class="dog-card" id="dog-card-8" style="background: #232742; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; height: 85px; box-sizing: border-box; opacity: 0.5;">
+        <img src="dog8.png" alt="dog8" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Dog Cody (Lvl 8)</h4>
+            <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 80%</p>
+        </div>
+        <button onclick="buySpecificDog(8)" id="dog-btn-8" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+    </div>
+
+    <!-- Dog 9 -->
+    <div class="dog-card" id="dog-card-9" style="background: #232742; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; height: 85px; box-sizing: border-box; opacity: 0.5;">
+        <img src="dog9.png" alt="dog9" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Dog Rex (Lvl 9)</h4>
+            <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 90%</p>
+        </div>
+        <button onclick="buySpecificDog(9)" id="dog-btn-9" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+    </div>
+
+    <!-- Dog 10 -->
+    <div class="dog-card" id="dog-card-10" style="background: #232742; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; height: 85px; box-sizing: border-box; opacity: 0.5;">
+        <img src="dog10.png" alt="dog10" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Dog June (Lvl 10)</h4>
+            <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight distance: max 100%</p>
+        </div>
+        <button onclick="buySpecificDog(10)" id="dog-btn-10" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+    </div>
 </div>
 
-            <div id="shop-rockets-container" style="display: none; height: calc(100vh - 180px); overflow-y: auto; padding-bottom: 120px; box-sizing: border-box;">
-                <div class="rocket-card" id="rocket-card-0" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px;">
-                    <img src="rocket0.png" alt="rocket0" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 5px 0; color: #fff;">Rocket Starter (Lvl 0)</h4>
-                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight speed: Base Speed</p>
-                    </div>
-                    <button id="rocket-btn-0" style="background: #2196F3; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">USED</button>
-                </div>
-                <div class="rocket-card" id="rocket-card-1" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px;">
-                    <img src="rocket1.png" alt="rocket1" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 5px 0; color: #fff;">Rocket Spark (Lvl 1)</h4>
-                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight speed: Speed x2</p>
-                    </div>
-                    <button onclick="buySpecificRocket(1)" id="rocket-btn-1" style="background: #ff5e5e; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">BUY<br>150000 🪙</button>
-                </div>
-                <div class="rocket-card" id="rocket-card-2" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
-                    <img src="rocket2.png" alt="rocket2" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 5px 0; color: #fff;">Rocket Nebula (Lvl 2)</h4>
-                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight speed: Speed x3</p>
-                    </div>
-                    <button onclick="buySpecificRocket(2)" id="rocket-btn-2" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
-                </div>
-                <div class="rocket-card" id="rocket-card-3" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
-                    <img src="rocket3.png" alt="rocket3" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 5px 0; color: #fff;">Rocket Quasar (Lvl 3)</h4>
-                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight speed: Speed x4</p>
-                    </div>
-                    <button onclick="buySpecificRocket(3)" id="rocket-btn-3" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
-                </div>
-                <div class="rocket-card" id="rocket-card-4" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
-                    <img src="rocket4.png" alt="rocket4" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 5px 0; color: #fff;">Rocket Supernova (Lvl 4)</h4>
-                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight speed: Speed x5</p>
-                    </div>
-                    <button onclick="buySpecificRocket(4)" id="rocket-btn-4" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
-                </div>
-                <div class="rocket-card" id="rocket-card-5" style="background: #232742; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; opacity: 0.5;">
-                    <img src="rocket5.png" alt="rocket5" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
-                    <div style="flex: 1;">
-                        <h4 style="margin: 0 0 5px 0; color: #fff;">Rocket June X (Lvl 5)</h4>
-                        <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight speed: Speed x6</p>
-                    </div>
-                    <button onclick="buySpecificRocket(5)" id="rocket-btn-5" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
-                </div>
-            </div>
+
+<div id="shop-rockets-container" style="display: none; height: calc(100vh - 75px); overflow-y: auto; padding-bottom: 125px; box-sizing: border-box;">
+    <!-- Rocket 0 -->
+    <div class="rocket-card" id="rocket-card-0" style="background: #232742; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; height: 85px; box-sizing: border-box;">
+        <img src="rocket0.png" alt="rocket0" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Rocket Starter (Lvl 0)</h4>
+            <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight speed: Base Speed</p>
+        </div>
+        <button id="rocket-btn-0" style="background: #2196F3; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">USED</button>
+    </div>
+
+    <!-- Rocket 1 -->
+    <div class="rocket-card" id="rocket-card-1" style="background: #232742; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; height: 85px; box-sizing: border-box;">
+        <img src="rocket1.png" alt="rocket1" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Rocket Spark (Lvl 1)</h4>
+            <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight speed: Speed x2</p>
+        </div>
+        <button onclick="buySpecificRocket(1)" id="rocket-btn-1" style="background: #ff5e5e; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">BUY<br>250000 🪙</button>
+    </div>
+
+    <!-- Rocket 2 -->
+    <div class="rocket-card" id="rocket-card-2" style="background: #232742; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; height: 85px; box-sizing: border-box; opacity: 0.5;">
+        <img src="rocket2.png" alt="rocket2" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Rocket Nebula (Lvl 2)</h4>
+            <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight speed: Speed x3</p>
+        </div>
+        <button onclick="buySpecificRocket(2)" id="rocket-btn-2" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+    </div>
+
+    <!-- Rocket 3 -->
+    <div class="rocket-card" id="rocket-card-3" style="background: #232742; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; height: 85px; box-sizing: border-box; opacity: 0.5;">
+        <img src="rocket3.png" alt="rocket3" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Rocket Quasar (Lvl 3)</h4>
+            <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight speed: Speed x4</p>
+        </div>
+        <button onclick="buySpecificRocket(3)" id="rocket-btn-3" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+    </div>
+
+    <!-- Rocket 4 -->
+    <div class="rocket-card" id="rocket-card-4" style="background: #232742; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; height: 85px; box-sizing: border-box; opacity: 0.5;">
+        <img src="rocket4.png" alt="rocket4" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Rocket Supernova (Lvl 4)</h4>
+            <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight speed: Speed x5</p>
+        </div>
+        <button onclick="buySpecificRocket(4)" id="rocket-btn-4" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+    </div>
+
+    <!-- Rocket 5 -->
+    <div class="rocket-card" id="rocket-card-5" style="background: #232742; padding: 10px 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #3d446e; display: flex; align-items: center; gap: 12px; height: 85px; box-sizing: border-box; opacity: 0.5;">
+        <img src="rocket5.png" alt="rocket5" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2);">
+        <div style="flex: 1;">
+            <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Rocket June X (Lvl 5)</h4>
+            <p style="margin: 0; font-size: 12px; color: #a2a9d6;">Flight speed: Speed x6</p>
+        </div>
+        <button onclick="buySpecificRocket(5)" id="rocket-btn-5" style="background: #4a517a; color: #fff; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer;">LOCKED</button>
+    </div>
+</div>
+
             <div id="shop-cases-container" style="display: none; height: calc(100vh - 50px); overflow-y: auto; padding-bottom: 220px; box-sizing: border-box;">
                 <p style="color: #a2a9d6; text-align: center; margin-top: 40px;">Кейсы появятся тут</p>
             </div>
@@ -618,7 +684,7 @@ button, a, input, [onclick], .earn-item, .shop-btn {
         
         <div style="display: flex; gap: 10px; margin-bottom: 20px; align-items: center;">
             <input type="text" id="clan-search-input" oninput="searchClans()" placeholder="Search clan..." style="flex: 1; padding: 12px; border-radius: 10px; border: 1px solid #3d446e; background: #232742; color: #fff; font-size: 14px; outline: none; box-sizing: border-box;">
-            <button onclick="openClanModal()" style="position: absolute; bottom: 110px; right: 20px; z-index: 99; padding: 12px 18px; border: none; border-radius: 20px; font-weight: bold; background: #2196F3; color: #fff; font-size: 13px; cursor: pointer; box-shadow: 0 4px 15px rgba(33,150,243,0.4); white-space: nowrap; -webkit-tap-highlight-color: transparent;">CREATE CLAN</button>
+            <button onclick="openClanModal()" style="position: absolute; bottom: 80px; right: 20px; z-index: 99; padding: 12px 18px; border: none; border-radius: 20px; font-weight: bold; background: #2196F3; color: #fff; font-size: 13px; cursor: pointer; box-shadow: 0 4px 15px rgba(33,150,243,0.4); white-space: nowrap; -webkit-tap-highlight-color: transparent;">CREATE CLAN</button>
         </div>
 
         <div style="text-align: left;">
@@ -715,10 +781,10 @@ button, a, input, [onclick], .earn-item, .shop-btn {
 </div>
 
 
-<div id="screen-earn" class="screen" style="background: #141729; padding: 80px 15px 140px; text-align: center; width: 100%; height: 100%; box-sizing: border-box; overflow-y: auto;">
+<div id="screen-earn" class="screen" style="background: #141729; padding: 80px 15px 26px; text-align: center; width: 100%; height: 100%; box-sizing: border-box; overflow-y: auto;">
     <h2 style="text-align: center; margin-bottom: 20px; color: #7ec8f8; text-transform: uppercase; font-size: 24px; font-weight: bold; letter-spacing: 0px; margin-top: -40px; margin-left: -10px;">💰 EARN TASKS 💰</h2>
     
-    <div id="earn-tasks-container" style="display: flex; flex-direction: column; gap: 15px; padding-bottom: 50px;">
+    <div id="earn-tasks-container" style="display: flex; flex-direction: column; gap: 15px; padding-bottom: 48px;">
         
         <!-- Задание 1: Друзья -->
         <div class="earn-item" style="background: #232742; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #3d446e; text-align: left; gap: 12px;">
@@ -731,49 +797,51 @@ button, a, input, [onclick], .earn-item, .shop-btn {
             <button id="btn-task-friends" onclick="claimFriendsTask()" style="padding: 10px 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 90px; font-size: 12px;">INVITE</button>
         </div>
 
-<!-- Задание: Подписка Telegram -->
-<div class="earn-item" style="background: #232742; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #3d446e; text-align: left; gap: 12px;">
+<!-- Панель 1: Телеграм Канал -->
+<div class="earn-item" onclick="startSubTask()" style="background: #232742; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #3d446e; text-align: left; gap: 12px; cursor: pointer;">
     <img src="sub_task.png" alt="sub" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2); flex-shrink: 0;">
     <div style="flex: 1; padding-right: 10px;">
-        <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Subscribe to Channel</h4>
+        <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Subscribe to Telegram</h4>
         <p style="margin: 0; font-size: 11px; color: #a2a9d6; line-height: 1.3;">Reward: +25,000 <img src="coin.png" style="width:12px; height:12px; vertical-align:middle;"></p>
     </div>
-    <button id="btn-task-sub" onclick="startSubTask()" style="padding: 10px 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 90px; font-size: 12px;">CHECK</button>
+    <button id="btn-task-sub" onclick="event.stopPropagation(); startSubTask();" style="padding: 10px 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 90px; font-size: 12px;">CHECK</button>
 </div>
 
-
-<!-- Задание: Подписка YouTube -->
-<div class="earn-item" style="background: #232742; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #3d446e; text-align: left; gap: 12px;">
+<!-- Панель 2: YouTube -->
+<div class="earn-item" onclick="startYoutubeTask()" style="background: #232742; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #3d446e; text-align: left; gap: 12px; cursor: pointer;">
     <img src="youtube_task.png" alt="youtube" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2); flex-shrink: 0;">
     <div style="flex: 1; padding-right: 10px;">
         <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Subscribe to YouTube</h4>
         <p style="margin: 0; font-size: 11px; color: #a2a9d6; line-height: 1.3;">Reward: +30,000 <img src="coin.png" style="width:12px; height:12px; vertical-align:middle;"></p>
     </div>
-    <button id="btn-task-youtube" onclick="startYoutubeTask()" style="padding: 10px 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 90px; font-size: 12px;">CHECK</button>
+    <button id="btn-task-youtube" onclick="event.stopPropagation(); startYoutubeTask();" style="padding: 10px 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 90px; font-size: 12px;">CHECK</button>
 </div>
 
-<!-- Задание: Подписка Instagram -->
-<div class="earn-item" style="background: #232742; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #3d446e; text-align: left; gap: 12px;">
+<!-- Панель 3: Instagram -->
+<div class="earn-item" onclick="startInstagramTask()" style="background: #232742; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #3d446e; text-align: left; gap: 12px; cursor: pointer;">
     <img src="instagram_task.png" alt="instagram" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2); flex-shrink: 0;">
     <div style="flex: 1; padding-right: 10px;">
         <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Subscribe to Instagram</h4>
         <p style="margin: 0; font-size: 11px; color: #a2a9d6; line-height: 1.3;">Reward: +25,000 <img src="coin.png" style="width:12px; height:12px; vertical-align:middle;"></p>
     </div>
-    <button id="btn-task-instagram" onclick="startInstagramTask()" style="padding: 10px 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 90px; font-size: 12px;">CHECK</button>
+    <button id="btn-task-instagram" onclick="event.stopPropagation(); startInstagramTask();" style="padding: 10px 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 90px; font-size: 12px;">CHECK</button>
 </div>
-        <!-- Задание: Подписка Facebook -->
-        <div class="earn-item" style="background: #232742; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #3d446e; text-align: left; gap: 12px;">
-            <img src="facebook_task.png" alt="facebook" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2); flex-shrink: 0;">
-            <div style="flex: 1; padding-right: 10px;">
-                <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Subscribe to Facebook</h4>
-                <p style="margin: 0; font-size: 11px; color: #a2a9d6; line-height: 1.3;">Reward: +20,000 <img src="coin.png" style="width:12px; height:12px; vertical-align:middle;"></p>
-            </div>
-            <button id="btn-task-facebook" onclick="startFacebookTask()" style="padding: 10px 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 90px; font-size: 12px;">CHECK</button>
-        </div>
+
+<!-- Панель 4: Twitter -->
+<div class="earn-item" onclick="startTwitterTask()" style="background: #232742; padding: 15px; border-radius: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #3d446e; text-align: left; gap: 12px; cursor: pointer;">
+    <img src="twitter_task.png?v=1" alt="twitter" style="width: 50px; height: 50px; object-fit: contain; border-radius: 8px; background: rgba(0,0,0,0.2); flex-shrink: 0;">
+    <div style="flex: 1; padding-right: 10px;">
+        <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 14px;">Subscribe to Twitter (X)</h4>
+        <p style="margin: 0; font-size: 11px; color: #a2a9d6; line-height: 1.3;">Reward: +20,000 <img src="coin.png" style="width:12px; height:12px; vertical-align:middle;"></p>
+    </div>
+    <button id="btn-task-twitter" onclick="event.stopPropagation(); startTwitterTask();" style="padding: 10px 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; background: #2196F3; color: #fff; min-width: 90px; font-size: 12px;">CHECK</button>
+</div>
 
 
 
-<div class="earn-item" style="background: #232742; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; gap: 10px; border: 1px solid #3d446e; text-align: left;">
+
+
+<div class="earn-item" style="background: #232742; padding: 20px; border-radius: 12px; display: flex; margin-bottom: -0px; z-index: -0; flex-direction: column; gap: 10px; border: 1px solid #3d446e; text-align: left;">
     <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
         <!-- Контейнер, который уменьшает вашу картинку code_task.png до размера инстаграма -->
         <div style="width: 50px; height: 50px; border-radius: 8px; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-sizing: border-box; padding: 6px;">
@@ -802,6 +870,7 @@ button, a, input, [onclick], .earn-item, .shop-btn {
             <button class="nav-btn" id="nav-earn">earn</button>
             <button class="nav-btn" id="nav-soon">soon.</button>
         </div>
+        <div style="position: absolute; bottom: -500px; left: 0; width: 100%; height: 500px; background: #141729; z-index: 1;"></div>
     </div>
     <div id="case-modal" class="case-modal">
         <div id="win-title" class="win-title"></div>
@@ -816,16 +885,24 @@ button, a, input, [onclick], .earn-item, .shop-btn {
     <script>
         (function() {
                     const SERVER_URL = "https://space-dogs-backend.vercel.app";
-                function showGameToast(message) {
+        function showGameToast(message, isError = false) {
             const toast = document.getElementById('game-notification');
             if (!toast) return;
+            
             toast.innerText = message;
+            
+            // ЖЕСТКАЯ ПРОВЕРКА: Если передали true ИЛИ если в тексте ошибки есть слова про спам/ссылки
+            if (isError === true || message.includes("spam") || message.includes("prohibited") || message.includes("muted")) {
+                toast.classList.add('error-type'); // Включаем полностью КРАСНЫЙ цвет
+            } else {
+                toast.classList.remove('error-type'); // Оставляем обычный СИНЕ-ГОЛУБОЙ цвет для покупок
+            }
+            
             toast.classList.add('show');
             
-            // Через 3 секунды уведомление плавно уезжает обратно наверх
             setTimeout(() => {
                 toast.classList.remove('show');
-            }, 3000);
+            }, 4000); // Показываем 4 секунды
         }
         window.showGameToast = showGameToast; // Делаем доступной везде
 
@@ -834,36 +911,10 @@ button, a, input, [onclick], .earn-item, .shop-btn {
         let explodePoint = 100;
         let rocketBottom = 15;
         let inSpace = false;
-let environmentProgress = 0;
-let currentSpeed = 0.5;
-window.lastMessagesCount = 0;
-
-// НАМЕРТВО БЛОКИРУЕМ РЕЗИНОВЫЙ ОТСКОК ЭКРАНА В ЧАТЕ КЛАНА
-let touchStartChatY = 0;
-
-document.addEventListener('touchstart', function(e) {
-    touchStartChatY = e.touches.clientY;
-}, { passive: true });
-
-document.addEventListener('touchmove', function(e) {
-    const box = document.getElementById('chat-messages-box');
-    if (!box) return;
-
-    if (e.target.closest('#chat-messages-box')) {
-        const isAtTop = box.scrollTop <= 0;
-        const isAtBottom = (box.scrollHeight - box.scrollTop - box.clientHeight) <= 1;
-        const touchMoveY = e.touches.clientY;
-
-        if ((isAtTop && touchMoveY > touchStartChatY) || (isAtBottom && touchMoveY < touchStartChatY)) {
-            e.preventDefault(); 
-        }
-    } else if (e.target.closest('#clan-chat-view')) {
-        e.preventDefault();
-    }
-}, { passive: false });
-
-function getNextSundayResetTime() {
-
+        let environmentProgress = 0;
+        let currentSpeed = 0.5;
+        window.lastMessagesCount = 0;
+        function getNextSundayResetTime() {
             let now = new Date();
             let resultDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             let currentDay = now.getDay() === 0 ? 7 : now.getDay();
@@ -877,20 +928,22 @@ function getNextSundayResetTime() {
             ? JSON.parse(localStorage.getItem('space_dogs_case_limits')) 
             : { dog: 0, rocket: 0, nextReset: getNextSundayResetTime() };
 
-        function checkAndResetWeeklyLimits() {
-            let now = Date.now();
-            if (!caseLimits.nextReset || caseLimits.nextReset === 0) {
-                caseLimits.nextReset = getNextSundayResetTime();
-                localStorage.setItem('space_dogs_case_limits', JSON.stringify(caseLimits));
-            }
-            if (now >= caseLimits.nextReset) {
-                caseLimits.dog = 0;
-                caseLimits.rocket = 0;
-                caseLimits.nextReset = getNextSundayResetTime();
-                localStorage.setItem('space_dogs_case_limits', JSON.stringify(caseLimits));
-            }
-        }
-
+function checkAndResetWeeklyLimits() {
+    let now = Date.now();
+    if (!caseLimits.nextReset || caseLimits.nextReset === 0) {
+        caseLimits.nextReset = getNextSundayResetTime();
+        localStorage.setItem('space_dogs_case_limits', JSON.stringify(caseLimits));
+    }
+    if (now >= caseLimits.nextReset) {
+        caseLimits.dog = 0;
+        caseLimits.rocket = 0;
+        caseLimits.nextReset = getNextSundayResetTime();
+        localStorage.setItem('space_dogs_case_limits', JSON.stringify(caseLimits));
+        
+        // ЖЕСТКО ОБНОВЛЯЕМ ПЕРЕМЕННУЮ В ПАМЯТИ ИГРЫ
+        window.caseLimits = caseLimits; 
+    }
+}
 
 function updateCaseLimitUI() {
     checkAndResetWeeklyLimits();
@@ -956,8 +1009,8 @@ function updateCaseLimitUI() {
 
     
 
-        const dogPrices = [0,20000,35000,95000,250000,650000,1500000,3800000,9000000,26000000,50000000];
-        const rocketPrices = [0,100000,300000,1800000,10000000,40000000];
+        const dogPrices = [0,40000,100000,250000,650000,1800000,5000000,15000000,45000000,120000000,400000000];
+        const rocketPrices = [0,250000,1000000,5000000,25000000,120000000];
 
         const tabDogsBtn = document.getElementById('shop-tab-dogs');
         const tabRocketsBtn = document.getElementById('shop-tab-rockets');
@@ -1054,6 +1107,7 @@ function updateCaseLimitUI() {
 
         function start(e) {
             if (!screens.game.classList.contains('active')) return;
+            btnHold.classList.add('is-pressed');
         const gameBal = document.getElementById('bal');
             if (gameBal && gameBal.parentElement) {
         const coinImg = gameBal.parentElement.querySelector('img');
@@ -1090,10 +1144,18 @@ function updateCaseLimitUI() {
                     balance = Number(balance) + earned;
                     bal.innerText = balance;
                     saveProgress();
-                    alert(`🚀 Dog power limit reached! Your max altitude for current levels is ${percent}%.\nUpgrade your dog in the Shop to fly further!`);
+                    
+if (typeof showGameToast === 'function') {
+    showGameToast(`🐾 Max altitude reached: ${percent}%! Upgrade your dog!`);
+} else {
+    alert(`🐾 Max altitude reached: ${percent}%! Upgrade your dog!`);
+}
+
+                    
                     reset();
                     return;
                 }
+
 
 
                 if (percent >= 100) {
@@ -1119,13 +1181,22 @@ function updateCaseLimitUI() {
                     setTimeout(() => {
                         balance = Number(balance) + 1000;
                         bal.innerText = balance;
-                        alert(`🎉 Congratulations! You reached 100% and successfully landed into Pluto! You earned 1000 spaces!`); 
+                        
+                        // Заменяем старый alert на компактный тоаст
+                        if (typeof showGameToast === 'function') {
+                            showGameToast(`🎉 Pluto reached! Landed and earned 1000 spaces!`);
+                        } else {
+                            alert(`🎉 Pluto reached! Landed and earned 1000 spaces!`);
+                        }
+                        
                         rocketBox.style.transition = 'none';
                         reset();
                     }, 2000);
-                    return; 
-                }
-            }, progressInterval)
+
+
+return; 
+    }
+}, progressInterval)
 
 
             physicsTimer = setInterval(() => {
@@ -1195,6 +1266,7 @@ function updateCaseLimitUI() {
     }
 
     function end() {
+        btnHold.classList.remove('is-pressed');
         if (!isHolding) return;
         clearInterval(timer); clearInterval(physicsTimer);
         isHolding = false;
@@ -1207,11 +1279,21 @@ function updateCaseLimitUI() {
         balance = Number(balance) + earned;
         bal.innerText = balance;
         saveProgress();
-        alert(`🎉 Successful launch! Rocket saved. You cashed out ${earned} spaces `);
+        
+// Стало:
+if (typeof showGameToast === 'function') {
+    showGameToast(`🚀 Launch saved! Cashed out ${earned} spaces`);
+} else {
+    alert(`🎉 Launch saved! Cashed out ${earned} spaces`);
+}
+
+        
         reset();
     }
 
+
     function reset() {
+        btnHold.classList.remove('is-pressed');
             rock.classList.remove('rocket-landing-anim');
                 clearInterval(timer); clearInterval(physicsTimer);
         isHolding = false; percent = 0; perc.innerText = percent;
@@ -1461,6 +1543,16 @@ function updateShopUI() {
         }
 
         function buySpecificDog(lvl) {
+            // HARD SEQUENTIAL CHECK: the next level must be exactly 1 level higher than the maximum owned level
+            if (lvl !== dogLevel + 1) {
+                if (typeof showGameToast === 'function') {
+                    showGameToast("❌ Buy dogs sequentially, level by level!", true);
+                } else {
+                    alert("❌ Buy dogs sequentially, level by level!");
+                }
+                return;
+            }
+
             let cost = dogPrices[lvl];
             if (cost === undefined || cost === 0) return;
 
@@ -1472,13 +1564,32 @@ function updateShopUI() {
                 updateShopUI();
                 
                 let tempMax = lvl * 10;
-                alert(`🎉 Congratulations! You unlocked ${dogNames[lvl]} (Lvl ${lvl})! Your flight limit will be: ${tempMax}% when you select it with the USE button!`);
+                if (typeof showGameToast === 'function') {
+                    showGameToast(`🎉 Unlocked Lvl ${lvl} Dog! Max limit: ${tempMax}%`);
+                } else {
+                    alert(`🎉 Unlocked Lvl ${lvl} Dog! Max limit: ${tempMax}%`);
+                }
             } else {
-                alert(`❌ Not enough coins! Need ${cost - balance} more spaces`);
+                if (typeof showGameToast === 'function') {
+                    showGameToast(`❌ Need ${cost - balance} more spaces`, true);
+                } else {
+                    alert(`❌ Need ${cost - balance} more spaces`);
+                }
             }
         }
 
+
         function buySpecificRocket(lvl) {
+            // HARD SEQUENTIAL CHECK: the rocket level must be exactly 1 level higher than the current rocket level
+            if (lvl !== rocketLevel + 1) {
+                if (typeof showGameToast === 'function') {
+                    showGameToast("❌ Buy rockets sequentially, level by level!", true);
+                } else {
+                    alert("❌ Buy rockets sequentially, level by level!");
+                }
+                return;
+            }
+
             let cost = rocketPrices[lvl];
             if (cost === undefined || cost === 0) return;
 
@@ -1488,11 +1599,22 @@ function updateShopUI() {
                 document.getElementById('bal').innerText = balance;
                 saveProgress();
                 updateShopUI();
-                alert(`🎉 Upgrade successful! Rocket Level ${lvl}! Speed multiplier: x${1 + lvl}`);
+                
+                if (typeof showGameToast === 'function') {
+                    showGameToast(`🎉 Upgraded to Lvl ${lvl} Rocket! Speed x${1 + lvl}`);
+                } else {
+                    alert(`🎉 Upgraded to Lvl ${lvl} Rocket! Speed x${1 + lvl}`);
+                }
             } else {
-                alert(`❌ Not enough coins! Need ${cost - balance} more spaces`);
+                if (typeof showGameToast === 'function') {
+                    showGameToast(`❌ Need ${cost - balance} more spaces`, true);
+                } else {
+                    alert(`❌ Need ${cost - balance} more spaces`);
+                }
             }
         }
+
+
 
 
         function equipDog(lvl) {
@@ -1529,10 +1651,54 @@ function updateShopUI() {
                 }
             }
         }
+        // Сама функция отправки баланса на сервер
+        function syncBalanceWithClan() {
+            if (!playerClan) return;
 
+            const myCurrentName = getTestPlayerName();
+            let myActualDog = localStorage.getItem('space_dogs_equipped_dog') !== null 
+                ? Number(localStorage.getItem('space_dogs_equipped_dog')) 
+                : 0;
 
+            fetch(`${SERVER_URL}/api/clans/sync-balance`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    clanName: playerClan,
+                    playerName: myCurrentName,
+                    playerBalance: Number(balance),
+                    playerDogLvl: myActualDog
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.clans) {
+                    clansData = data.clans;
+                    window.clansData = data.clans;
+                    if (currentClanSubTab === 'members') {
+                        renderClanMembersList();
+                    }
+                }
+            })
+            .catch(err => console.log("Ошибка фоновой синхронизации:", err.message));
+        }
+        window.syncBalanceWithClan = syncBalanceWithClan;
 
+        // Перезаписываем основную функцию сохранения, чтобы она пинала сервер
+        function saveProgress() {
+            localStorage.setItem('space_dogs_balance', balance); 
+            localStorage.setItem('space_dogs_owned_dogs', JSON.stringify(ownedDogs)); 
+            localStorage.setItem('space_dogs_owned_rockets', JSON.stringify(ownedRockets)); 
+            localStorage.setItem('space_dogs_equipped_dog', equippedDog);
+            localStorage.setItem('space_dogs_equipped_rocket', equippedRocket);
+            
+            dogLevel = ownedDogs.length > 0 ? Math.max(...ownedDogs) : 0;
+            rocketLevel = ownedRockets.length > 0 ? Math.max(...ownedRockets) : 0;
 
+            if (typeof syncBalanceWithClan === 'function') syncBalanceWithClan();
+        }
+
+        // Возвращаем на место вашу функцию экипировки ракеты
         function equipRocket(lvl) {
             if (ownedRockets.includes(lvl)) {
                 equippedRocket = lvl;
@@ -1540,6 +1706,7 @@ function updateShopUI() {
                 updateShopUI();
             }
         }
+
 
         window.buySpecificDog = buySpecificDog;
         window.buySpecificRocket = buySpecificRocket;
@@ -1551,21 +1718,47 @@ function updateShopUI() {
 updateShopUI();
 
         switchTab('game');
-        function openCustomCase(type, cost) {
+        async function openCustomCase(type, cost) {
             checkAndResetWeeklyLimits();
             if ((caseLimits[type] || 0) >= 5) {
                 alert("You have reached the weekly purchase limit for this case! The limit will reset on Sunday at 00:00.");
                 return;
             }
 
-            if (balance < cost) {
-                alert("Not enough telegram stars!");
-                return;
-            }
+            const tg = window.Telegram ? window.Telegram.WebApp : null;
+            const initData = tg ? tg.initData : "";
+            
+            // Если игрок в Telegram, запускаем настоящее окно оплаты Stars
+            if (initData && tg) {
+                try {
+                    // Запрашиваем ссылку на оплату у вашего сервера
+                    const response = await fetch(`${SERVER_URL}/api/create-stars-invoice`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ type: type, cost: cost, initData: initData })
+                    });
+                    const data = await response.json();
+                    if (data.error) return alert("❌ " + data.error);
 
-            balance -= cost;
-            const balEl = document.getElementById('bal');
-            if (balEl) balEl.innerText = balance;
+                    // Открываем официальное окно оплаты Telegram Stars
+                    const paymentStatus = await new Promise((resolve) => {
+                        tg.openInvoice(data.invoiceLink, (status) => resolve(status));
+                    });
+
+                    if (paymentStatus !== 'paid') {
+                        if (paymentStatus === 'cancelled') alert("❌ Payment cancelled by user.");
+                        else alert("❌ Payment failed or timed out.");
+                        return; // Останавливаем код, кейс не откроется
+                    }
+                    alert("🎉 Payment successful! Good luck!");
+                } catch (err) {
+                    console.error("Ошибка оплаты:", err);
+                    return alert("Error connecting to the payment server.");
+                }
+            } else {
+                // Если тест на ПК в обычном браузере, просто предупреждаем и крутим бесплатно
+                if (!confirm(`[ТЕСТ БРАУЗЕРА] Списать ${cost} звезд и открыть кейс?`)) return;
+            }
 
             let rewardLvl = 0;
             const totalItemsCount = 40; 
@@ -1690,7 +1883,6 @@ updateShopUI();
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
-        tg.disableVerticalSwipes();
         tg.setHeaderColor('#090a10');
         tg.setBackgroundColor('#090a10');
     }
@@ -1777,16 +1969,23 @@ window.openCustomCase = openCustomCase;
                     return res.json();
                 })
                 .then(data => {
-                    // Строгая проверка: обновляем данные только если прилетел корректный массив
                     if (data && Array.isArray(data)) {
+                        // Жестко пишем данные в оба места, чтобы исключить конфликты областей видимости
                         clansData = data;
-                        executeRenderClansVisual();
+                        window.clansData = data;
+                        
+                        if (typeof executeRenderClansVisual === 'function') {
+                            executeRenderClansVisual();
+                        }
                     }
                 })
                 .catch(err => {
                     console.log("Фоновое обновление пропущено, чтобы не сломать чат:", err.message);
                 });
         }
+        // Экспортируем функцию загрузки наружу
+        window.loadClansFromServer = loadClansFromServer;
+
 
 
 
@@ -1820,48 +2019,75 @@ setInterval(() => {
             
             if (!container || !browserView || !chatView) return;
 
-            // Защитная проверка глобального массива перед рендерингом
+            // Синхронизируем глобальные данные
+            if (window.clansData && Array.isArray(window.clansData)) {
+                clansData = window.clansData;
+            }
+
+            // Если данные от сервера еще ни разу не пришли, просто ждем загрузки
             if (!clansData || !Array.isArray(clansData)) {
-                console.log("Предотвращено падение интерфейса: clansData пуст.");
+                console.log("Данные кланов не инициализированы...");
                 return;
             }
 
             playerClan = localStorage.getItem('space_dogs_player_clan') || null;
 
             if (playerClan) {
+                // Ищем наш клан в актуальном списке от сервера
                 const currentClan = clansData.find(c => c.name === playerClan);
+                
                 if (currentClan) {
+                    // ЕСЛИ КЛАН СУЩЕСТВУЕТ: Показываем чат и участников
                     browserView.style.display = 'none';
                     chatView.style.display = 'flex';
+                    
                     if (document.getElementById('chat-clan-name')) document.getElementById('chat-clan-name').innerText = playerClan;
                     if (document.getElementById('chat-clan-logo')) document.getElementById('chat-clan-logo').innerText = currentClan.logo;
                     
-if (currentClanSubTab === 'chat') {
-    const box = document.getElementById('chat-messages-box');
-    if (box) {
-        const distanceFromBottom = box.scrollHeight - box.scrollTop - box.clientHeight;
-        if (distanceFromBottom > 60) {
-            // Ничего не делаем, чат не перезаписывается
-        } else {
-            renderChatMessages();
-        }
-    } else {
-        renderChatMessages();
-    }
-} else if (currentClanSubTab === 'members') {
-    renderClanMembersList();
-}
-
-                    return;
+                    if (currentClanSubTab === 'chat') {
+                        const box = document.getElementById('chat-messages-box');
+                        if (box) {
+                            const distanceFromBottom = box.scrollHeight - box.scrollTop - box.clientHeight;
+                            if (distanceFromBottom > 60) {
+                                // Игрок читает историю
+                            } else {
+                                if (typeof renderChatMessages === 'function') renderChatMessages();
+                            }
+                        } else {
+                            if (typeof renderChatMessages === 'function') renderChatMessages();
+                        }
+                    } else if (currentClanSubTab === 'members') {
+                        if (typeof renderClanMembersList === 'function') renderClanMembersList();
+                    }
+                    return; 
                 } else {
+                    // АВТО-ВЫШИБАЛА ДЛЯ ЛЮДЕЙ В ЧАТЕ:
+                    // Если в памяти телефона написано, что игрок в клане, но сервер ответил, 
+                    // что этого клана БОЛЬШЕ НЕТ (Лидер нажал дизбанд) — МГНОВЕННО КРАШИМ ИНТЕРФЕЙС КЛАНА ДЛЯ ИГРОКА!
                     playerClan = null;
                     localStorage.removeItem('space_dogs_player_clan');
+                    
+                    const box = document.getElementById('chat-messages-box');
+                    if (box) box.innerHTML = "";
+                    
+                    // Сбрасываем вкладку на дефолтный чат на будущее
+                    currentClanSubTab = 'chat';
+                    
+                    alert("This clan has been disbanded by the leader!");
                 }
             }
 
+            // РЕЖИМ ЧИСТОГО ПОИСКА: Сюда падает и Лидер после выхода, и обычные люди после авто-вышибалы
             browserView.style.display = 'block';
             chatView.style.display = 'none';
-            container.innerHTML = "";
+            container.innerHTML = ""; 
+            
+            // Если на сервере вообще не осталось созданных кланов (база пуста)
+            if (clansData.length === 0) {
+                container.innerHTML = `<p style="color: #a2a9d6; font-size: 13px; text-align: center; margin-top: 20px;">No clans created yet. Be the first!</p>`;
+                return;
+            }
+
             const filtered = clansData.filter(c => c.name.toLowerCase().includes(filterText.toLowerCase()));
 
             if (filtered.length === 0) {
@@ -1869,9 +2095,10 @@ if (currentClanSubTab === 'chat') {
                 return;
             }
 
-            filtered.forEach((clan, index) => {
+            filtered.forEach((clan) => {
                 const clanCard = document.createElement('div');
                 clanCard.style.cssText = "background: #232742; padding: 12px 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #3d446e; margin-bottom: 10px;";
+                
                 clanCard.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 12px; max-width: 55%; overflow: hidden;">
                         <div style="width: 42px; height: 42px; border-radius: 50%; background: #141729; display: flex; align-items: center; justify-content: center; font-size: 20px; border: 1px solid #3d446e; flex-shrink: 0;">${clan.logo}</div>
@@ -1885,12 +2112,20 @@ if (currentClanSubTab === 'chat') {
                             <span>${Number(clan.bank || 0).toLocaleString()}</span>
                             <img src="coin.png" style="width:12px; height:12px; vertical-align:middle;">
                         </div>
-                        <button id="join-btn-${index}" style="padding: 8px 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 11px; cursor: pointer; background: #4caf50; color: #fff;">JOIN</button>
+                        <button class="safe-join-btn" style="padding: 8px 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 11px; cursor: pointer; background: #4caf50; color: #fff;">JOIN</button>
                     </div>`;
+                
+                const joinBtn = clanCard.querySelector('.safe-join-btn');
+                if (joinBtn) {
+                    joinBtn.onclick = () => {
+                        if (typeof joinClan === 'function') joinClan(clan);
+                    };
+                }
+                
                 container.appendChild(clanCard);
-                document.getElementById(`join-btn-${index}`).onclick = () => joinClan(clan);
             });
         }
+        window.executeRenderClansVisual = executeRenderClansVisual;
 
 
         function createNewClan() {
@@ -1904,8 +2139,6 @@ if (currentClanSubTab === 'chat') {
             if (balance < 1000000) return alert(`❌ Need ${1000000 - balance} more spaces.`);
 
             const badge = document.getElementById('clan-badge-select').value;
-
-            // Извлекаем правильное имя создателя (ТГ ник или Space_Pilot на ПК)
             const myTgName = getTestPlayerName();
 
             fetch(`${SERVER_URL}/api/clans/create`, {
@@ -1932,33 +2165,19 @@ if (currentClanSubTab === 'chat') {
                 if (typeof saveProgress === 'function') saveProgress();
                 closeClanModal();
                 
+                // Просто обновляем данные и переключаем интерфейс БЕЗ лишних запросов join!
                 clansData = data.clans;
+                window.clansData = data.clans;
                 currentClanSubTab = 'chat';
-                executeRenderClansVisual();
-
-                // 🔥 ЖЕСТКИЙ ФИКС: Сразу после создания клана отправляем на сервер 
-                // реальный уровень собаки лидера (equippedDog), чтобы он не сбрасывался в Lvl 0!
-                fetch(`${SERVER_URL}/api/clans/join`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        clanName: name,
-                        playerName: myTgName,
-                        playerBalance: Number(balance),
-                        playerDogLvl: Number(equippedDog) // Отправляем собаку из магазина намертво
-                    })
-                })
-                .then(r => r.json())
-                .then(updatedData => {
-                    clansData = updatedData.clans;
-                    if (currentClanSubTab === 'members') {
-                        renderClanMembersList();
-                    }
-                })
-                .catch(err => console.error("Ошибка фиксации собаки лидера:", err));
+                
+                if (typeof executeRenderClansVisual === 'function') {
+                    executeRenderClansVisual();
+                }
             })
             .catch(err => alert("Error logging in via the server"));
         }
+        window.createNewClan = createNewClan;
+
 
 
         function joinClan(clan) {
@@ -1973,6 +2192,10 @@ if (currentClanSubTab === 'chat') {
                 myTgName = user.username ? `@${user.username}` : user.first_name;
             }
 
+            let myActualDog = localStorage.getItem('space_dogs_equipped_dog') !== null 
+                ? Number(localStorage.getItem('space_dogs_equipped_dog')) 
+                : 0;
+
             fetch(`${SERVER_URL}/api/clans/join`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1980,12 +2203,12 @@ if (currentClanSubTab === 'chat') {
                     clanName: clan.name,
                     playerName: myTgName,
                     playerBalance: Number(balance),
-                    playerDogLvl: Number(equippedDog)
+                    playerDogLvl: myActualDog
                 })
             })
             .then(res => res.json())
             .then(data => {
-                if (data.error) return alert("❌ " + data.error);
+                if (data && data.error) return alert("❌ " + data.error);
                 
                 playerClan = clan.name;
                 localStorage.setItem('space_dogs_player_clan', clan.name);
@@ -1993,11 +2216,16 @@ if (currentClanSubTab === 'chat') {
                 alert(`👋 Welcome to the "${clan.name}" clan!`);
                 
                 clansData = data.clans;
+                window.clansData = data.clans;
                 currentClanSubTab = 'chat';
-                executeRenderClansVisual();
+                if (typeof executeRenderClansVisual === 'function') {
+                    executeRenderClansVisual();
+                }
             })
             .catch(err => alert("Ошибка вступления через сервер."));
         }
+        window.joinClan = joinClan;
+
 
         function renderClanMembersList() {
             const listContainer = document.getElementById('clan-subview-members');
@@ -2041,38 +2269,75 @@ if (currentClanSubTab === 'chat') {
         }
 
         function triggerLeaveFromChat() {
-            if (!playerClan) return;
+            const savedClanName = localStorage.getItem('space_dogs_player_clan') || playerClan;
+            if (!savedClanName) return;
 
-            // Вычисляем имя прямо внутри функции
+            if (!confirm(`Leave "${savedClanName}"?`)) return;
+
             let myTgName = "Space_Pilot";
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
                 const user = window.Telegram.WebApp.initDataUnsafe.user;
                 myTgName = user.username ? `@${user.username}` : user.first_name;
             }
 
-            if (confirm(`Leave "${playerClan}"?`)) {
-                fetch(`${SERVER_URL}/api/clans/leave`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        clanName: playerClan,
-                        playerName: myTgName, // Передаем вычисленное имя пилота
-                        playerBalance: Number(balance)
-                    })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    document.getElementById('chat-messages-box').innerHTML = ""; 
-                    playerClan = null; 
-                    localStorage.removeItem('space_dogs_player_clan'); 
-                    
-                    clansData = data.clans;
-                    executeRenderClansVisual(); 
-                    alert("You have successfully left the clan!");
-                })
-                .catch(err => alert("Ошибка выхода через сервер."));
+            // МГНОВЕННЫЙ СБРОС НА КЛИЕНТЕ
+            playerClan = null; 
+            localStorage.removeItem('space_dogs_player_clan'); 
+
+            const messagesBox = document.getElementById('chat-messages-box');
+            if (messagesBox) messagesBox.innerHTML = ""; 
+            
+            const browserView = document.getElementById('clan-browser-view');
+            const chatView = document.getElementById('clan-chat-view');
+            if (browserView) browserView.style.display = 'block';
+            if (chatView) chatView.style.display = 'none';
+
+            // ЖЕСТКО ВЫРЕЗАЕМ ИЗ СПИСКА КАРТОЧКУ ТЕКУЩЕГО КЛАНА
+            if (window.clansData && Array.isArray(window.clansData)) {
+                window.clansData = window.clansData.filter(c => c.name !== savedClanName);
+                clansData = window.clansData;
             }
+            if (typeof clansData !== 'undefined' && Array.isArray(clansData)) {
+                clansData = clansData.filter(c => c.name !== savedClanName);
+            }
+
+            // Моментально перерисовываем чистый экран поиска
+            if (typeof executeRenderClansVisual === 'function') {
+                executeRenderClansVisual(); 
+            }
+
+            if (typeof switchTab === 'function') {
+                switchTab('clans');
+            }
+
+            // Отправляем фоновый запрос на сервер
+            fetch(`${SERVER_URL}/api/clans/leave`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    clanName: savedClanName,
+                    playerName: myTgName,
+                    playerBalance: Number(balance)
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.clans) {
+                    window.clansData = data.clans;
+                    clansData = data.clans;
+                }
+                if (typeof executeRenderClansVisual === 'function') executeRenderClansVisual(); 
+                alert("You have successfully left the clan!");
+            })
+            .catch(err => {
+                console.error("Фоновое удаление завершено на сервере:", err);
+                if (typeof executeRenderClansVisual === 'function') executeRenderClansVisual();
+            });
         }
+        window.triggerLeaveFromChat = triggerLeaveFromChat;
+
+
+
 
 
 
@@ -2105,8 +2370,21 @@ if (currentClanSubTab === 'chat') {
             const input = document.getElementById('chat-message-input');
             if (!input || !playerClan || !input.value.trim()) return;
             
-            const timeStr = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            const textToSend = input.value.trim();
 
+            // 1. Проверка на ссылки (Локальная)
+            const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)|([a-zA-Z0-9-]+\.[a-zA-Z]{2,}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*))|(t\.me\/[^\s]+)/gi;
+            if (urlRegex.test(textToSend)) {
+                if (typeof showGameToast === 'function') {
+                    // ЗДЕСЬ СТОИТ TRUE: плашка вылетит ПОЛНОСТЬЮ КРАСНОЙ
+                    showGameToast("⚠️ Links are not allowed in clan chat!", true);
+                } else {
+                    alert("⚠️ Links are not allowed in clan chat!");
+                }
+                return; 
+            }
+
+            const timeStr = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
             let myTgName = "Space_Pilot";
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
                 const user = window.Telegram.WebApp.initDataUnsafe.user;
@@ -2119,21 +2397,18 @@ if (currentClanSubTab === 'chat') {
                 body: JSON.stringify({
                     clanName: playerClan,
                     sender: myTgName,
-                    text: input.value.trim(),
+                    text: textToSend,
                     time: timeStr
                 })
             })
             .then(res => {
-                // Если сервер вернул ошибку спама (429) или мута (423)
                 if (!res.ok) {
                     return res.json().then(errData => {
-                        // Показываем красивую ошибку прямо внутри игры!
                         if (typeof showGameToast === 'function') {
-                            showGameToast(`⚠️ ${errData.error || "Slow down! Don't spam."}`);
+                            showGameToast(`⚠️ ${errData.error || "Action blocked by server."}`, true);
                         } else {
-                            alert(`⚠️ ${errData.error || "Slow down! Don't spam."}`);
+                            alert(`⚠️ ${errData.error || "Action blocked by server."}`);
                         }
-                        // Прерываем код, чтобы он не шёл дальше и не ломал консоль
                         throw new Error(errData.error); 
                     });
                 }
@@ -2147,10 +2422,14 @@ if (currentClanSubTab === 'chat') {
                 }
             })
             .catch(err => {
-                console.log("Запрос заблокирован спам-фильтром сервера:", err.message);
+                console.log("Запрос обработан фильтром:", err.message);
+                if (err.message && typeof showGameToast === 'function') {
+                    if (err.message.includes("prohibited") || err.message.includes("spam") || err.message.includes("muted")) {
+                        showGameToast(`⚠️ ${err.message}`, true);
+                    }
+                }
             });
-        }
-
+}
 
 
 
@@ -2237,13 +2516,11 @@ if (distanceFromBottom > 40) {
 
         } 
 
-
-
-
-
-
         function triggerLeaveFromChat() {
-            if (!playerClan) return;
+            const savedClanName = localStorage.getItem('space_dogs_player_clan') || playerClan;
+            if (!savedClanName) return;
+
+            if (!confirm(`Leave "${savedClanName}"?`)) return;
 
             let myTgName = "Space_Pilot";
             if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
@@ -2251,29 +2528,78 @@ if (distanceFromBottom > 40) {
                 myTgName = user.username ? `@${user.username}` : user.first_name;
             }
 
-            if (confirm(`Leave "${playerClan}"?`)) {
-                fetch(`${SERVER_URL}/api/clans/leave`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        clanName: playerClan,
-                        playerName: myTgName,
-                        playerBalance: Number(balance)
-                    })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    document.getElementById('chat-messages-box').innerHTML = ""; 
-                    playerClan = null; 
-                    localStorage.removeItem('space_dogs_player_clan'); 
-                    
-                    clansData = data.clans;
-                    executeRenderClansVisual(); 
-                    alert("You have successfully left the clan!");
-                })
-                .catch(err => alert("Ошибка выхода через сервер."));
+            // 1. МГНОВЕННОЕ УНИЧТОЖЕНИЕ КЛАНА НА КЛИЕНТЕ И ОЧИСТКА ЭКРАНА
+            playerClan = null; 
+            localStorage.removeItem('space_dogs_player_clan'); 
+
+            // Насильно очищаем бокс сообщений чата и закрываем экраны чата
+            const messagesBox = document.getElementById('chat-messages-box');
+            if (messagesBox) messagesBox.innerHTML = ""; 
+            
+            const browserView = document.getElementById('clan-browser-view');
+            const chatView = document.getElementById('clan-chat-view');
+            if (browserView) browserView.style.display = 'block';
+            if (chatView) chatView.style.display = 'none';
+
+            // Намертво вырезаем этот клан из локального массива прямо сейчас,
+            // чтобы фоновые таймеры обновления не смогли вернуть его карточку на экран!
+            if (window.clansData && Array.isArray(window.clansData)) {
+                window.clansData = window.clansData.filter(c => c.name !== savedClanName);
+                clansData = window.clansData;
+            } else if (typeof clansData !== 'undefined' && Array.isArray(clansData)) {
+                clansData = clansData.filter(c => c.name !== savedClanName);
             }
+
+            // Насильно очищаем контейнер со списком кланов в HTML, убирая карточку за 0 миллисекунд
+            const container = document.getElementById('clans-list-container');
+            if (container) {
+                container.innerHTML = "";
+                // Если это был единственный клан, сразу пишем красивый текст
+                if (!clansData || clansData.length === 0) {
+                    container.innerHTML = `<p style="color: #a2a9d6; font-size: 13px; text-align: center; margin-top: 20px;">No clans created yet. Be the first!</p>`;
+                }
+            }
+
+            // Перерисовываем пустой экран поиска кланов
+            if (typeof executeRenderClansVisual === 'function') {
+                executeRenderClansVisual(); 
+            }
+
+            // Программно переключаем вкладку главного меню
+            if (typeof switchTab === 'function') {
+                switchTab('clans');
+            }
+
+            // 2. ОТПРАВЛЯЕМ ЗАПРОС НА СЕРВЕР (Он сотрет клан из базы под ноль)
+            fetch(`${SERVER_URL}/api/clans/leave`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    clanName: savedClanName,
+                    playerName: myTgName,
+                    playerBalance: Number(balance)
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.clans) {
+                    window.clansData = data.clans;
+                    clansData = data.clans;
+                }
+                // Финальная перерисовка актуального списка от сервера
+                if (typeof executeRenderClansVisual === 'function') {
+                    executeRenderClansVisual(); 
+                }
+                alert("You have successfully left the clan!");
+            })
+            .catch(err => {
+                console.error("Фоновое удаление завершено на сервере:", err);
+                // Даже если сервер вернул ошибку, принудительно затираем экран ещё раз
+                if (typeof executeRenderClansVisual === 'function') executeRenderClansVisual();
+            });
         }
+        window.triggerLeaveFromChat = triggerLeaveFromChat;
+
 
         function sendClanMessage() {
             const input = document.getElementById('chat-message-input');
@@ -2486,7 +2812,303 @@ if (distanceFromBottom > 40) {
         window.sendClanMessage = sendClanMessage;
 
         setTimeout(() => { loadClansFromServer(); }, 100);
-    })();
-    </script>
+
+        // =======================================================
+        //  ММММ  ЛОГИКА СИСТЕМЫ ОДНОРАЗОВЫХ ЗАДАНИЙ (EARN)  ММММ
+        // =======================================================
+
+let earnStatuses = localStorage.getItem('space_dogs_earn_statuses')
+    ? JSON.parse(localStorage.getItem('space_dogs_earn_statuses')) 
+    : { tg: "claim", youtube: "claim", instagram: "claim", twitter: "claim", code: "claim" };
+
+
+        function setButtonDone(buttonId) {
+            const btn = document.getElementById(buttonId);
+            if (!btn) return;
+            btn.style.background = '#4a517a'; 
+            btn.style.color = 'rgba(255, 255, 255, 0.6)';
+            btn.style.cursor = 'not-allowed';
+            btn.innerText = 'DONE';
+            btn.disabled = true; 
+            btn.onclick = null;  
+        }
+
+        function updateEarnUI() {
+            if (earnStatuses.tg === "done") setButtonDone('btn-task-sub');
+            if (earnStatuses.youtube === "done") setButtonDone('btn-task-youtube');
+            if (earnStatuses.instagram === "done") setButtonDone('btn-task-instagram');
+            if (earnStatuses.twitter === "done") setButtonDone('btn-task-twitter');
+            if (earnStatuses.code === "done") {
+                setButtonDone('btn-task-code');
+                const codeInput = document.getElementById('input-daily-code');
+                if (codeInput) {
+                    codeInput.disabled = true;
+                    codeInput.placeholder = "TASK COMPLETED";
+                }
+            }
+        }
+
+        function saveEarnStatuses() {
+            localStorage.setItem('space_dogs_earn_statuses', JSON.stringify(earnStatuses));
+        }
+
+        // В ОТДЕЛЕ НИЖЕ ВСТАВЛЯЙТЕ СВОИ ССЫЛКИ ПОСЛЕ СОЗДАНИЯ СОЦСЕТЕЙ:
+        window.startSubTask = function() {
+            if (earnStatuses.tg === "done") return;
+            const tg = window.Telegram ? window.Telegram.WebApp : null;
+            const initData = tg ? tg.initData : "";
+            const btn = document.getElementById('btn-task-sub');
+
+            if (btn.innerText === "CHECK") {
+                // СЮДА ССЫЛКУ НА ТЕЛЕГРАМ КАНАЛ
+                if (tg) tg.openTelegramLink("https://t.me/spacedogoff"); 
+                else window.open("https://t.me/spacedogoff", "_blank");
+
+                btn.innerText = "VERIFY";
+                btn.style.background = '#ffb300'; 
+                btn.style.color = '#000';
+                return;
+            }
+
+            if (btn.innerText === "VERIFY") {
+                if (!initData) {
+                    if (confirm("[ТЕСТ БРАУЗЕРА] Засчитать подписку на Telegram-канал?")) {
+                        processSuccessfulTask('tg', 25000, 'btn-task-sub', "🎉 +25,000 spaces rewarded!");
+                    }
+                    return;
+                }
+                btn.innerText = "WAIT...";
+                btn.disabled = true;
+
+                fetch(`${SERVER_URL}/api/tasks/check-telegram`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ initData: initData })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    btn.disabled = false;
+                    if (data.isMember) {
+                        processSuccessfulTask('tg', 25000, 'btn-task-sub', "🎉 +25,000 spaces rewarded!");
+                    } else {
+                        btn.innerText = "VERIFY";
+                        btn.style.background = '#ffb300';
+                        showGameToast("❌ You are not subscribed to the channel yet!", true);
+                    }
+                })
+                .catch(err => {
+                    btn.disabled = false;
+                    btn.innerText = "VERIFY";
+                    console.error(err);
+                    showGameToast("❌ Server check error, try later.", true);
+                });
+            }
+        };
+
+        window.startYoutubeTask = function() {
+            if (earnStatuses.youtube === "done") return;
+            // СЮДА ССЫЛКУ НА ЮТУБ
+            handleSocialTask('youtube', 'https://www.youtube.com/@spaceoff-n6g', 30000, 'btn-task-youtube');
+        };
+
+        window.startInstagramTask = function() {
+            if (earnStatuses.instagram === "done") return;
+            // СЮДА ССЫЛКУ НА ИНСТАГРАМ
+            handleSocialTask('instagram', 'https://www.instagram.com/sdsds_d889/', 25000, 'btn-task-instagram');
+        };
+
+window.startTwitterTask = function() {
+    if (earnStatuses.twitter === "done") return;
+    handleSocialTask('twitter', 'https://x.com/SpaceDogsOff', 20000, 'btn-task-twitter');
+};
+
+        // === ЗАДАНИЕ: ПРИГЛАШЕНИЕ ДРУЗЕЙ (ДЛЯ НАСТОЯЩЕГО WEB APP /NEWAPP) ===
+        window.claimFriendsTask = function() {
+            // Защита от падения скрипта, если Telegram еще не прогрузился
+            if (!window.Telegram || !window.Telegram.WebApp) {
+                alert("Ошибка: Telegram WebApp API не найден!");
+                return;
+            }
+
+            const tg = window.Telegram.WebApp;
+            
+            // Если игрок зашел не из Telegram (а ты тестируешь на ПК в хроме)
+            if (!tg.initDataUnsafe || !tg.initDataUnsafe.user) {
+                alert("[ТЕСТ БРАУЗЕРА] В Telegram здесь откроется список ваших друзей.");
+                return;
+            }
+
+            const userId = tg.initDataUnsafe.user.id;
+            const botUrl = "https://t.me/SpaceDogsGameBot"; // Ссылка на твой /newapp
+            const refLink = `${botUrl}?startapp=ref_${userId}`;
+            const shareText = "🚀 Join Space Dogs! Fly a rocket into space and earn spaces with me! 🐾";
+
+            // ВАРИАНТ 1: Самая новая официальная функция Telegram для вызова шторки
+            if (typeof tg.showInviteSheet === 'function') {
+                tg.showInviteSheet({
+                    text: shareText,
+                    start_param: "ref_" + userId
+                });
+                return;
+            }
+
+            // ВАРИАНТ 2: Нативное открытие прямой ссылки шаринга через системный обход блокировок
+            const finalShareUrl = `https://t.me{encodeURIComponent(refLink)}&text=${encodeURIComponent(shareText)}`;
+            if (typeof tg.openLink === 'function') {
+                tg.openLink(finalShareUrl);
+                return;
+            }
+
+            // ВАРИАНТ 3: Если всё совсем плохо со старой версией Telegram
+            tg.openTelegramLink(finalShareUrl);
+        };
+
+
+
+        function checkMyInvitedFriends() {
+            const tg = window.Telegram ? window.Telegram.WebApp : null;
+            const initData = tg ? tg.initData : "";
+            if (!initData) return;
+
+            fetch(`${SERVER_URL}/api/tasks/check-friends`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ initData: initData })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const friendsCountSpan = document.getElementById('earn-friends-count');
+                if (friendsCountSpan) {
+                    friendsCountSpan.innerText = data.friendsCount;
+                }
+
+                const btn = document.getElementById('btn-task-friends');
+                if (data.friendsCount >= 3 && btn && btn.innerText === "INVITE") {
+                    btn.innerText = "CLAIM CASE";
+                    btn.style.background = '#4caf50'; 
+                    btn.onclick = function() {
+                        fetch(`${SERVER_URL}/api/tasks/claim-friends-reward`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ initData: initData })
+                        })
+                        .then(r => r.json())
+                        .then(resData => {
+                            if (resData.success) {
+                                showGameToast("🎉 You received 1x Special Dog Case!");
+                                btn.innerText = "DONE";
+                                btn.style.background = '#4a517a';
+                                btn.style.cursor = 'not-allowed';
+                                btn.disabled = true;
+                                btn.onclick = null;
+                            }
+                        });
+                    };
+                }
+            })
+            .catch(err => console.error("Ошибка проверки друзей:", err));
+        }
+
+
+        function handleSocialTask(type, link, reward, buttonId) {
+            const btn = document.getElementById(buttonId);
+            if (!btn) return;
+
+            if (btn.innerText === "CHECK") {
+                window.open(link, "_blank");
+                btn.innerText = "VERIFY";
+                btn.style.background = '#ffb300';
+                btn.style.color = '#000';
+                return;
+            }
+
+            if (btn.innerText === "VERIFY") {
+                btn.innerText = "WAIT 5m...";
+                btn.disabled = true;
+                btn.style.background = '#222644';
+                btn.style.color = '#fff';
+
+                showGameToast("⏳ Checking subscription status... active within 5 minutes!");
+
+                setTimeout(() => {
+                    processSuccessfulTask(type, reward, buttonId, `🎉 Subscription approved! +${reward.toLocaleString()} spaces!`);
+                }, 5000);
+            }
+        }
+
+        window.verifyDailyCode = function() {
+            if (earnStatuses.code === "done") return;
+            const input = document.getElementById('input-daily-code');
+            if (!input || !input.value.trim()) {
+                showGameToast("❌ Please enter the secret code!", true);
+                return;
+            }
+            const enteredCode = input.value.trim().toUpperCase();
+            const tg = window.Telegram ? window.Telegram.WebApp : null;
+            const initData = tg ? tg.initData : "";
+
+            if (!initData) {
+                if (enteredCode === "SPACE") { 
+                    processSuccessfulTask('code', 20000, 'btn-task-code', "🎉 Secret code correct! +20,000 spaces!");
+                } else {
+                    showGameToast("❌ Invalid secret code!", true);
+                }
+                return;
+            }
+
+            fetch(`${SERVER_URL}/api/tasks/verify-code`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: enteredCode, initData: initData })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    processSuccessfulTask('code', 20000, 'btn-task-code', "🎉 Secret code correct! +20,000 spaces!");
+                } else {
+                    showGameToast(`❌ ${data.error || "Invalid secret code!"}`, true);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showGameToast("❌ Code validation server error", true);
+            });
+        };
+
+        function processSuccessfulTask(type, reward, buttonId, toastMessage) {
+            balance = Number(balance) + reward;
+            const balUI = document.getElementById('bal');
+            if (balUI) balUI.innerText = balance;
+
+            earnStatuses[type] = "done";
+            saveEarnStatuses();
+            setButtonDone(buttonId);
+
+            if (type === 'code') {
+                const input = document.getElementById('input-daily-code');
+                if (input) {
+                    input.disabled = true;
+                    input.value = "";
+                    input.placeholder = "TASK COMPLETED";
+                }
+            }
+            if (typeof saveProgress === 'function') saveProgress();
+            showGameToast(toastMessage);
+        }
+
+        const originalSwitchTab = window.switchTab;
+        window.switchTab = function(targetTab) {
+            if (typeof originalSwitchTab === 'function') {
+                originalSwitchTab(targetTab);
+            }
+            if (targetTab === 'earn') {
+                updateEarnUI(); 
+            }
+        };
+
+        updateEarnUI();
+
+    })(); // Конец вашей изолированной области видимости фронтенда
+</script>
 </body>
 </html>
